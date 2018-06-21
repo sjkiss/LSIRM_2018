@@ -1,0 +1,1767 @@
+\documentclass{article}
+\author{Simon J. Kiss, PhD}
+\title{Introduction to R\\Laurier Summer Institute of Research Methods}
+% !TEX encoding = UTF-8 Unicode
+% !BIB TS-program = biber
+\usepackage{polyglossia}
+\usepackage{listings}
+\lstset{breaklines=TRUE}
+\usepackage{csquotes}
+\usepackage{fontspec}
+\usepackage{graphicx}
+\setmainlanguage{english}
+\usepackage{grffile}
+\usepackage{enumitem}
+\setlist[enumerate]{leftmargin=*}
+\usepackage{url}
+\usepackage[backend=biber]{biblatex}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{framed}
+\colorlet{shadecolor}{lightgray!35!}
+\newcounter{assignment}
+\newenvironment{assignment}{%
+\refstepcounter{assignment}\setlength\OuterFrameSep{2pt plus 1pt}\setlength\fboxsep{5pt}\begin{snugshade*}\hspace*{-\dimexpr\labelsep+\fboxsep\relax}\textbf{\theassignment.}}%
+{\end{snugshade*}}
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+<<setup, include=FALSE, results='hide', echo=F>>=
+library(knitr)
+opts_chunk$set(eval=T, message=F, fig.path='fig/',fig.width=3, fig.align='center',fig.height=3,warning=F, error=F, results='markup', tidy=FALSE, echo=T )
+#render_listings()
+Sys.setenv(TEXINPUTS=getwd(), BIBINPUTS=getwd(),BSTINPUTS=getwd())
+to.load<-c('ggplot2', 'tidyr', 'dplyr', 'devtools', 'devtools', 'car', 'psych', 'stargazer', 'haven', 'pastecs', 'stargazer', 'xtable', 'effects')
+lapply(to.load, require, character.only=T)
+
+@
+
+\maketitle
+\section{Introduction}
+R is an extremely versatile scripting language designed specifically for statistical analysis. While it can be challenging, it is powerful and becoming more and more popular (See Figure \ref{fig:impact}). You can read about R's popularity here: ( \url{http://www.nytimes.com/2009/01/07/technology/business-computing/07program.html?_r=0&adxnnl=1&adxnnlx=1387818816-QuojNV64l82gPGzuygdTEA}.)
+
+\begin{figure}
+\centering
+\caption{Scholarly articles using SPSS and SAS are declining, R and Stata are increasing}
+\label{fig:impact}
+\includegraphics[width=0.75\textwidth]{~/OneDrive - Wilfrid Laurier University/Coding/images/impact.png}
+
+\end{figure}
+
+
+Some of its major advantages include:
+\begin{itemize}
+\item it is free
+\item it is open source, meaning that anyone with the interest and capability can contribute to it's developmen
+\item it is focussed on statistical analysis and data visualization
+\end{itemize}
+
+\subsection{The Growth of Packages}
+The growth in the number of packages of commands is nothing short of astonishing (see Figure \ref{fig:packages}) as a product of the open-source nature of the software. One happy challenge associated with R is keeping up with the number of new functions in new packages that solve previous problems or accomplish the same things.  One of the most innovative developments is associated with the work of Hadley Wickham \url{http://hadley.nz/}, a statistician and data scientist at RStudio and at the University of Auckland.  In the last three or four years he has developed a series of packages that, together, really transform R's workflow from data importation to plotting.  The innovations are so profound that it is now common to speak of ''Base R'' and the ``Hadleyverse'' (\url{http://adolfoalvarez.cl/the-hitchhikers-guide-to-the-hadleyverse/}).  The ``Hadleyverse'' has not completely eclipsed all functions in base R, but it is getting pretty close.  Moreover, he shows no signs of slowing down.  
+
+The tutorial below will teach Base-R and supplement it with four packages from the ``Hadleyverse'' that I think are the most useful, namely, \texttt{ggplot2}, \texttt{tidyr}, \texttt{dplyr} and \texttt{haven}. \texttt{ggplot2} is a complete overhaul of R's plotting function, what R is perhaps best known for.  In theory, it implements principles of graphic design emphasized by Edward Tufte and is meant to facilitate exploring large datasets by visualization as opposed to formal modelling.  \texttt{ggplot2} works best with what is called \emph{tidy} data. We will touch on this below if we have time, but fundamentally, tidy data are organized such that each column is a variable and each row is an observation.  \texttt{dplyr} is meant to deal easily and quickly with splitting data sets according to your criteria and applying functions (like calculating means, medians or standard errors)  and returning this.  \texttt{Haven} is a package to facilitate importing and exporting R data frames to and from other commonly used softward data forms (e.g. SPSS and Stata. ) The trend is so strong that a certain politician who shall go unnamed is taking notice (see Figure \ref{trump}).
+
+
+\begin{figure}
+
+\centering
+\caption{Growth of R packages over time}
+\label{fig:packages}
+\includegraphics[width=0.75\textwidth]{~/OneDrive - Wilfrid Laurier University/Coding/images/packages.png}
+
+\end{figure}
+
+
+\begin{figure}
+\center
+\caption{Donald J. Trump, PhD stands solidly behind SPSS}
+\label{trump}
+\includegraphics[scale=0.3]{/Users/Simon/OneDrive - Wilfrid Laurier University/Coding/images/trump_spss.png}
+\end{figure}
+
+\subsection{RStudio}
+Although it can be challenging, some recent innovations have lowered the learning curve.  RStudio is an example. While R is the underlying statistical software, RStudio is an Integrated Development Environment (IDE) for R.  It provides features such as the easy capability to view help files, plots, and the workspace environment on the same screen in which you are scripting, minimizing the need to switch back and forth between screens.  It also offers a Graphical User Interface (GUI) set of menu options to perform some basic tasks such as opening and saving scripts and opening and saving your workspace.
+
+Figure \ref{fig:screen} displays roughly what you see when you open up RStudio.  The four panes might be in a slightly different order.  In order to get this, you might have to select File > New File > R Script from the menu option. 
+
+Once you do that, the panel at the top left is your script editor.  This is where you type your commands that you will send to R. Think of it like a painter's sketch pad; you try out some different ideas and when you like them, you put the ideas onto the actual canvas.  In R, you send the ideas you are happy with from the script editor to the R console (bottom left) by pressing \texttt{CMD-Return} on a Mac or \texttt{CNTL-Enter} on a PC. You can send commands line-by-line (the cursor's position dictates which line is executed) or you can selected a section of lines and run that code.  The top right panel shows you the workspace you are working in and the bottom right panel shows you a combination of things, primarily it shows you any graphs you produce (plots) and help files you want to read.
+
+![](path/to/smallorb.png) 
+\begin{figure}
+\center
+\caption{RStudio screen}
+\label{fig:screen}
+\includegraphics[width=0.75\textwidth]{/screen.png}
+\end{figure}
+
+Commands in R take the form of \texttt{command\(\)} with arguments to each command inside the parentheses.  See what happens when you type the following in your script editor and then press CMD-Return (or CNTL-ENTER)
+
+<<print, eval=TRUE>>=
+print('Hello world')
+@
+
+The results of any command can be saved with R's assignment operator <- The objects on the left receive --  and become aliases for -- what is on the right.  It's an awkward thing it's true: one way to make it easier to remember is to interpret strings with the operator as `left' gets right.  So in the following command object `store' gets the results of `print(`hello world'). 
+<<store, eval=TRUE>>=
+store<-print('Hello world')
+store
+@
+
+
+
+\subsection{Installing Packages}
+R works by bundling sets of related commands in a package of pre-coded functions. These are installed and downloaded onto your computer. Once installed, they do not need to be installed again. 
+
+
+The command to install packages is: 
+
+
+<<install-packages, eval=F>>=
+install.packages('package name')
+@
+
+For today's lesson, I have arranged to have the bulk of the necessary packages already installed via some code that was distributed earlier.  However, to practice, we can try to install one more: 
+
+\begin{assignment}
+install the package \texttt{janeaustenr}. \label{assignment1}
+\end{assignment}
+
+\subsubsection{Pro Tip 1}
+Often we may want to install multiple packages at once. Rather than having one command for each package, it is possible to install multiple packages. The following code does this, it is supplied here for your future use. 
+
+<<pro-tip-1, eval=T>>=
+#This line creates a vector of the packages you want to install.
+to.install<-c('pastecs', 'haven', 'labelled', 'car', 'psych',
+              'ggplot2', 'dplyr', 'tidyr', 'Hmisc', 'devtools', 'xtable', 
+              'effects', 'stargazer')
+#This line searches through the packages that are already installed and 
+#compares them to the vector to.install. Any packages not already installed 
+#are stored in the vector new.packages
+new.packages <- to.install[!(to.install 
+                             %in% installed.packages()[,"Package"])]
+#If there are packages that must be installed, this installs them.
+#Note that the argument repos=is not usually necessary.
+if(length(new.packages)) 
+  install.packages(new.packages, repos='http://cran.utstat.utoronto.ca/')
+##This loads packages as libraries (see section below)
+lapply(to.install, require, character.only=T)
+@
+\subsubsection{Loading Libraries}
+Once packages are installed, they must be loaded into your computer's working memory. This is a distinct step and must happen each time you start a new R script. The first two libraries we'll be working with is the \textbf{C}ompanion to \textbf{A}pplied \textbf{R}egression (\texttt{car}) by John Fox, a sociologist at McMaster University \url{http://socserv.mcmaster.ca/jfox/} and the \texttt{haven} library, which is focussed on reading different types of data sets into R.  Both libraries are, to my mind, indispensable and would be good candidates to load every time you use R.  One note on the \texttt{haven} library.  It is a new ``Hadleyverse'' package meant for data import and export.  It builds on the foreign package that was widely used to the same ends. To my end, it is superior. Also note: it is under heavy development.
+Libraries are loaded singly simply with:
+
+<<load-janeausten,eval=F>>=
+library(janeaustenr)
+@
+% \begin{assignment}
+% Load the libraries \texttt{car} and \texttt{haven}.\label{assignment2}
+% \end{assignment}
+\section{Basics of the R language}
+\subsection{Data Types}
+There are multiple types of data within the R environment and we'll start by working through some of the different ways that data are stored.
+\subsubsection{Numeric}
+Numbers are stored as `numeric' data.
+<<numeric, eval=T>>=
+num<-1
+@
+
+\subsubsection{Character}
+Character strings (e.g. letters and numbers stored as characters, not numbers) have to be single-quoted. Note, in general it's best to use single-quotes when dealing with single strings.  When combining multiple strings, double-quotes should be used.
+<<character, eval=T>>=
+char<-'1'
+@
+
+You can compare what both look like by printing both to the screen. 
+
+<<examine-num-char>>=
+num
+char
+@
+
+You can also use the \texttt{class()} command to check what class an object is.
+<<class>>=
+class(num)
+class(char)
+@
+
+\subsubsection{Vectors}
+Objects of the same class can be stored in a vector of objects. Vectors are formed with the \texttt{c()} command (e.g. concatenate), using commas to separate each element in the vector.
+
+\begin{assignment}
+\begin{itemize}
+\item Turn the class ages into a vector with the \texttt{c()} command called ages. 
+\item Turn the class genders into a vector with the \texttt{c()} command called gender. Code males as 0 and females as 1.
+\item Turn the class lucky numbers into a vector called lucky using the \texttt{c()} command.\label{assignment3}
+\end{itemize}
+
+\end{assignment}
+<<solution3-hidden, echo=F, results='hide'>>=
+#NOte, these are fake,obviously, could replace with numers from the class
+ages<-c(32,27,45)
+gender<-c(0,1,1)
+lucky<-c(7,5,4)
+@
+
+\subsubsection{Matrices}
+Matrices are combinations of numeric vectors (and only numeric vectors) in rows and columns.  They can be formed with the command \texttt{matrix()}.
+
+\begin{assignment}
+Combine \texttt{age}, \texttt{gender} and \texttt{lucky} into one matrix called \texttt{matrix1} with 3 columns and n rows using the \texttt{matrix()} command, the \texttt{ncol=} and/or the \texttt{nrow=} arguments.  Repeat this exercise, but specify the \texttt{byrow=TRUE }argument and store this in \texttt{matrix2}.   Inspect the two. \label{assignment4}
+\end{assignment}
+
+R has a powerful way of accessing elements inside vectors and matrices. With single dimension matrices (i.e. vectors), a number inside square brakcets \texttt{[i]} returns the ith element of that vector. 
+
+\begin{assignment}
+Get your own age from \texttt{ages}. Get your own gender from \texttt{gender}.  \label{assignment5}
+\end{assignment}
+
+In matrices, the first position in the square brackets returns the row and the second position in the square brackets returns the columns.\emph{This is an important convention in R and I'm not aware of any function or command where this is reveresed: first rows, then columns. }
+\begin{assignment}
+\begin{itemize}
+  \item  Get the first row of\texttt{ matrix1}
+  \item then get the second row 
+  \item Then return the first column of \texttt{matrix2.}
+\end{itemize}\label{assignment6}
+\end{assignment}
+
+You can also get a range of \emph{consecutive} columns with the : notation.  And you can get a selection of columns with a vector of columns, by using the \texttt{c()} argument inside the square brackets. 
+
+\begin{assignment}
+\begin{itemize}
+\item Return the first through third columns of \texttt{matrix1}.  
+\item Return the first and third columns of \texttt{matrix1}
+\end{itemize}\label{assignment7}
+\end{assignment}
+
+\subsubsection{Data Frames}
+Data frames are special types of matrices.  They are also stored in rows and columns, but they allow for mixing classes of variables (i.e. numeric and character vectors can be stored alongside each other).  They also explicitly assign variable \emph{names} to columns. These can be accessed with the \$ immediately following the data frame's name, rather than just the column number. 
+
+\emph{Put more glibly, matrices has rows and columns of numbers; data frames have observations (in the rows) and variables (in the columns).
+}
+
+data frames are constructed with command \texttt{data.frame(variable\_name=variable, variable\_name=variable)}.
+
+<<create-df>>=
+df<-data.frame(age=ages, gender=gender, lucky=lucky)
+@
+<<summary-commands, eval=T, R.options=list(max.print=10)>>=
+#summarize the first few rows of a data frame
+head(df)
+#Examine the structure of a data frame
+str(df)
+#Summary statistics of a data frame.
+summary(df)
+#Access one variable of a data frame
+df$age
+#Check class
+class(df$age)
+class(df$gender)
+class(df$lucky)
+@
+
+\subsubsection{Factors}
+Factors are particular types of character vectors.  Factors are R\'s term for categorical variables.  Storing character vectors as factors allows the user to instruct R to treat it like a categorical variable. The key attribute that factor have is levels, which are like the value labels in SPSS.  There is a key difference between SPSS value labels and factor levels, however, which we will return to below.
+
+In our example of\texttt{ genders }and \texttt{ages}, we want to convert the 1s in the gender variable to female and the 0s to males.  car's \texttt{recode()} command is the ticket.  It is one of the most versatile and frequently used packages in R. Get used to it, quickly!
+
+The syntax for the \texttt{recode()} command is as follows:
+<<recode-gender, R.options=list(max.print=10)>>=
+recode(df$gender, "0='male' ; 1='female'", as.factor.result=T)
+@
+
+
+There are a few key important things to note here. First, all of the recodes are surrounded by double-quotes,i.e. "".  Second, the specific values to be recoded are separated by a semi-colon, i.e.  ;.  Lastly, when recoding to or from a character string, i.e. `male', they must be in single-quotes.  Failure to obey all of these rules means the command won\'t work. 
+
+However, not only do we want to conduct this recode, we want to attach it to the data frame as well.  If we want to override the original variable, we can just save the results of the above in df\$gender.  If we do not want to override (and there are very good reasons why this would be the case).
+
+<<recode-gender-2>>=
+df$gender2<-recode(df$gender, 
+                   "0='male' ; 1='female'", 
+                   as.factor.result=T)
+@
+
+You can check the levels of the factor with the \texttt{levels()}commmand.
+<<check-levels-gender2>>=
+levels(df$gender2)
+@
+Often, when it comes to plotting or setting the reference levels for factors, you will want to change the order of the levels of the factor.  You can do this by specifying the levels with the \texttt{levels=} option to the factor command.  It takes a character vector as its argument. Note, the levels you provide \emph{must} be typed exactly as the levels that actually exist in the factor.  That is, if you have coded male as \texttt{Male}; you have to write \texttt{levels=c('Male')}, otherwise, the data will disappear. 
+
+
+\begin{assignment}
+Refactor the gender2 variable so that `males' is the first level and `females' the second. \label{assignment8}
+\end{assignment}
+
+\subsubsection{Lists}
+Lists are a collection of vector, data frames or matrices.  They are extremely helpful because
+you can apply the same function to each list element. So you can list together three separate surveys and then perform the same function on each of them, i.e. counting the number of cases in each to compare sample size, or running three linear models of the same variables on three separate datasets to compare how regression coefficients compare across time or space.
+
+<<lists>>=
+##Lists
+list1<-list(ages, gender,lucky)
+@
+
+With lists, the square-bracket notation is extended so that each individual list item is accessed with \texttt{ [[]]}
+ and then each individual element in that particular list is accessed with \texttt{[]} as with vectors or matrices.
+
+
+\begin{assignment}
+use \texttt{class()} to compare the class of \texttt{list1} with individual elements of list1.\label{assignment9}
+
+\end{assignment}
+
+
+\subsubsection{The \texttt{as.class()} commands}
+R provides a number of functions to coerce vectors of one class into another.  These are basically the form \texttt{as.class\_name}.  Compare:
+<<as-class, eval=F>>=
+#print the numeric variable num as a character
+as.character(num)
+#print the character variable char as a number
+as.numeric(char)
+#Convert both to a factor (categorical variable)
+as.factor(num)
+as.factor(char)
+#Convert a matrix to a data.frame
+as.data.frame(matrix1)
+
+@
+
+\subsection{Mathematical notation}
+R uses all the important base mathematical functions with fairly intuitive symbols. 
+<<maths, eval=TRUE>>=
+x<-1+2
+x
+y<-2+1
+x/y
+x*y
+x^2
+sqrt(9)
+@
+\subsection{Writing Functions}
+Writing functions is quite simple, but it does take a programmer's mind to really make use of it.   I introduce them to you here to show you how they work. The basic syntax is:
+
+<<show-function-syntax>>=
+#Note: the capitalization patterns for functions. 
+#Words are not separated with periods or underscores, but with capitalized names.
+#The arguments that each function takes are specified in parentheses.  
+functionName<-function(x,y,z){ #The actual commands are opened with a curly brace command 
+#The function commands are entered here
+}# The function is closed here
+
+@
+The following sample function takes one argument (i) and prints it. The function itself is saved as \texttt{test}.  
+
+<<test-function,eval=TRUE>>=
+#Test function
+test<-function(i) {
+  print(i)  
+}
+@
+
+<<results-test-function, eval=TRUE>>=
+test(7)
+test(as.character(7))
+@
+\begin{assignment}
+Write a function that produces the product of its two arguments\label{assignment10}
+\end{assignment}
+\subsection{Asking For Help}
+The quickest way to ask for help is to enter a ? followed by a function name. A warning, the help documentation for functions can be a little bit opaque.  Things to look for include the proper arguments that functions take and also, what each function produces. 
+
+The second thing to do is to post questions on one of the R help sites.  The place to do this used to be the listserv r-help.  It worked well, but it was daunting because it was famous for extremely snarky responses.  A much friendlier and as quick place to post help requests is the website Stack Overflow \url{http://www.stackoverflow.com}.  I advise you to get a user name and password for this as soon as you can.  The one thing that is important for this is that people insist on posting reproducible code so that they can see the problem you are facing.  If we have time, we will practice this at the end. 
+<<ask-for-help, eval=FALSE>>=
+?as.factor
+@
+\section{Working With Data}
+\subsection{Reading Data In}
+R has a number of functions meant to read data in from a variety of formats. The core functions are \texttt{read.table()} for plain text files, \texttt{read.csv()} for .csv files. More elaborate files (e.g. SPSS or Stata) require functions in the \texttt{haven} library, e.g. \texttt{read\_sav} for spss files and read\_dta for stata files.  For this course, I already sent a file and asked you to save it to a folder.  
+Read the data in with this command below. Note: you must modify the file name path name to match the location where you downloaded the file above to.
+<<read-in, eval=T, echo=F, results='hide'>>=
+#Read the file in
+ces<-read_sav(file=
+'~/OneDrive - Wilfrid Laurier University/canadian_politics/canadian_election_studies/CES15/CES2015-phone-release/CES2015_CPS-PES-MBS_complete.sav')
+@
+<<read-in-show, eval=F>>=
+#Read the file in
+ces<-read_sav(file=
+'your_path_name.sav')
+@
+Most SPSS categorical variables have value labels.  Data is encoded numerically and then labels are attached to those values, but separate.  R does not do this natively.  Variables are \emph{either} numeric (i.e. without any value labels) \emph{or} as factors (i.e. without numeric content).  This can present a challenge when shuttling back and forth with colleagues who usually work in SPSS.  
+
+SPSS files store a lot of useful metadata information attached to each variable. The first is the \texttt{label}, known in SPSS circles asthe \texttt{variable label}.and the second is the \texttt{value labels}, known as the \texttt{labels}.
+
+What we we want to do is lop through each variable, and get the label for each..
+
+Unlike its predecessor, the \texttt{haven} package provides a \texttt{labelled} class of variable which is meant to be an \emph{intermediate variable}, quickly converted to standard R factors, allowing you to capture the often useful information stored in value labels (i.e. was 0 'male' or 1 'male', again?) before converting to standard R format.  
+
+\subsection{Summarizing Data Frames}
+After reading data in, it is usually a good idea to inspect the data to get a feel for what you have read in. 
+There are a few commands that can be useful to inspect data frames.  
+
+<<summarize-data, eval=F>>=
+#Different ways of summarizing the data set
+#Check the first few rows
+head(ces)
+#The last few rows
+tail(ces)
+#Check the structure of the object
+str(ces)
+#Summarize the data set
+summary(ces)
+#See the variables names
+names(ces)
+#Combine commands by nesting
+head(names(ces))
+tail(names(ces))
+@
+
+You can also use \texttt{summary()} to look at one variable in particular.
+<<summarize-province>>=
+#Look at one variable in particular
+summary(ces$CPS15_PROVINCE)
+@
+
+It can be a little bit difficult to handle such a large data set. What follows are some tricks to make it a little easier to work with. 
+
+\subsection{Understanding Large data Sets}
+Although most data sets come with a codebook that lists things like variable names, question text and variable values, I find it disruptive to my workflow to exit R and hunt and peck through often poorly formatted pdf files from a long time ago.  Admittedly, SPSS' visual interface makes it a little easier to search through large data sets to find hte variables you need.  
+
+There are two sets of meta data that are often useful: the variable label and the value label.  The variable label in SPSS is usually an indicator of what the variable stores, if not the outright question text.  And the value label is what the numeric values attached to each question represents.  
+
+Haven attaches the variable label from an SPSS (and I think possibly stata files) to each variable in an \texttt{attribute} of the type \texttt{label}.  You can access a variable's label with the \texttt{attr()} command.  One of the first variables in the CES data set \texttt{CPS15\_0}.
+<<variable-labels,results='markup', echo=T>>=
+attr(ces$CPS15_0, 'label')
+@
+
+The value labels for each variable are attached in an \texttt{attribute} of the type \texttt{labels}.
+<<value-labels,results='markup',echo=T>>=
+attr(ces$CPS15_0, 'labels')
+@
+So, if we produce a summary of this variable, we will get the following results below, which don't say a lot on their own, but we know that it is about people being satisfied with democracy in Canada where 1 is very satisfied and 7 is not satisfied at all.  
+<<satisfcation>>=
+#summary of satisfcation
+summary(ces$CPS15_0)
+
+@
+
+Now, we have over 400 variables, is there a way to capture, store and search the variable labels, value labels for \emph{each} variable. Yes.  And this is the subject of the next section.  Note, the following is \emph{both} a bit of a hack that I have developed on my part and an illustration of a very important concept in R, the \texttt{apply() } family of commands. This is how R conducts loop operations. 
+
+\subsection{The Apply Family in R}
+Inevitably on R help boards, someone poses the question, ``how do I construct a \texttt{for()} loop in R''.  The answer is always a reference to the \texttt{apply()} family of commands.  There are three core functions and two lesser used ones.
+
+\begin{itemize}
+\item \texttt{apply()} applies a function to each row or column of a matrix or data frame
+\item \texttt{lapply()} lapply applies a function to each \emph{element} of a vector, data frame or matrix and returns a list the result of which is the result of applying function 
+\item \texttt{sapply()} is a wrapper for lapply that returns either a vector, or a matrix. Does not return a list.
+\end{itemize}
+
+<<echo=T, eval=F>>=
+#apply, 1, applies function to each row, 2 applies function to each column
+apply(data_frame, 1, function)
+
+ #when there are no arguments 
+lapply(data_frame_name, function)
+
+#when there is an argument you need to supply to a function, 
+#you can use any letter to serve as a variable
+lapply(data_frame_name, function(x), summary(x)) #is equivalent to
+lapply(data_frame_name, summary)
+ @
+
+\begin{assignment}\begin{itemize}
+\item  using the \texttt{apply()} command, apply a function to calculate produce a summary of each variable (column). 
+
+\item Using \texttt{lapply()} and the function \texttt{attr()} extract the variable labels associated with each variable in the data frame \texttt{ces}. Store them in an object called \texttt{variable\_labels}
+\item Using \texttt{lapply()},  and the function \texttt{attr()} extract the value labels associated with each variable in the data frame \texttt{ces}. Store them in an object called \texttt{value\_labels}
+\end{itemize}\label{assignment11}
+\end{assignment}
+<<solution11-hidden, echo=F, eval=T,echo=F, results='hide'>>=
+#summarize each variable
+apply(ces,2,summary)
+#Get and storevariable labels
+variable_labels<-lapply(ces, function(x)attr(x, 'label'))
+#Get and store value labels
+value_labels<-lapply(ces, function(x) attr(x, 'labels'))
+@
+
+\subsection{Converting From Labelled To Factor Class}
+As referred to above, the haven package has a labelled class which is meant to be an intermediate class to mirror the way that software like SPSS and Stata store variable meta data.  It is not meant to be used in R.  
+
+There are two ways to deal with the labelled class.  You can use the function \texttt{as\_factor()} to turn a variable from a labelled variable into a standard categorical variable.  Watch what happens in the assignment below. 
+% \begin{assignment}
+% Use the \texttt{table()} command to quickly produce a frequency table of the labelled variable dealing with satisfaction with democracy (CPS15\_0). Do the same thing wrapping CPS15\_0 in \texttt{as\_factor()}.\label{assignment12}
+% \end{assignment}
+
+Got that? When the variable is labelled, the value labels are sort of attached to the numeric coding, so they are not printed. When the variable is factored, the numeric values are acdtually replaced with the character strings of the value labels.  
+
+going forward, you can keep variables stored as labelled variables and each time you access them, convert them on a case-by-case basis by wrapping them in\texttt{ as\_factor()} \texttt{or} by recoding them and then changing their class. We'll do the latter strategy in this course.
+
+Note: these exercises really only apply to reading data in from SPSS or Stata format.  If you have more raw data, as in a csv file, or perhaps your own entered data from your own experiments, these steps will not be necessary. AS such, these steps may be particular to people working with large, cross-sectional data in fields like political science, sociology, economics and public health, rather than in experimental fields like psychology, medicine or other natural sciences. 
+
+
+
+\subsection{Segue: searching for variables}
+A disadvantage of R is that one does not have the variable question text and value labels immediately in front of oneself that can help clarify what exactly each variable is.  This is a hindrance to the workflow, I admit. Previously I would open up a parallel files in SPSS and use them to search for the variables I wanted.  Since, then, I've learned some techniques to accomplish this quickly in R. The key is to store the variable labels (usually question text in spss files) and value labels. 
+
+With that, we can use the \texttt{grep()} command.  \texttt{grep()} is a unix command that searches plain text files and returns lines that match a 'regular expression'.  These are patterns to search for in text \url{https://xkcd.com/208/}. they can be complex to learn, but some basic searches are useful for our purposes here.
+In the following, we're searching for \texttt{news}, in the object variable\_labels and we want it to return the actual line of text that contains news.  We also want it to ignore the case. 
+
+<<grep,results='markup', echo=T>>=
+grep('news', variable_labels, value=T, ignore.case=T)
+@
+
+Regular expressions can be modified to be very specific:
+\begin{itemize}
+  \item  \^{}abc finds abc at the beginning of a string
+  \item abc\$ finds abc at the end of a string
+  \item{[}0-9{]}abc finds any digit
+  \item {[}a-z{]}1 finds any letter followed by a one.
+\end{itemize}
+
+\begin{assignment} Using \texttt{grep()}, find the variables from ces that give us \emph{news consumption, gender, education, whether the respondent voted or not, age} and \emph{income}.  If you're having trouble with \texttt{grep()}, flip to the technical documentation. Store the names of the variables of interest in one vector called \texttt{variables}.\label{assignment13} \end{assignment}
+
+<<solution13-hidden,results='hide', echo=FALSE>>=
+grep('news', variable_labels, value=T, ignore.case=T)
+grep('age', variable_labels, value=T, ignore.case=T)
+grep('year', variable_labels, value=T, ignore.case=T)
+grep('education', variable_labels, value=T, ignore.case=T)
+grep('vote', variable_labels, value=T, ignore.case=T)
+grep('income', variable_labels, value=T, ignore.case=T)
+grep('gender', variable_labels, value=T, ignore.case=T)
+variables<-c('PES15_74', 'PES15_75', 'PES15_76', 'PES15_77', 'PES15_78', 'CPS15_78', 'CPS15_79', 'PES15_3', 'CPS15_92', 'RGENDER')
+
+@
+
+\subsection{Making A Subsetted Data Frame}
+We want to make a new data frame with a subset of the variables of interest identified above.  There are a few ways to do this. There are many ways, I'll quickly show you two ways.  
+\subsubsection{Hadleyverse}
+The first way uses the \texttt{select()} command which is part of the \texttt{dplyr} package.
+
+<<select-variables>>=
+out<-select(ces, one_of(variables))
+@
+The help documentation for the\texttt{ select()} command shows a very useful set of functions that can be provided to \texttt{select()} to specify precisely what variables you want to include. 
+
+\begin{assignment}
+Use the \texttt{select()} command to select only the Campaign Period Survey variables. Store them in an object called cps.\label{assignment14}
+\end{assignment}
+
+<<solution14-hidden, echo=F, results='hide'>>=
+cps<-select(ces, contains('CPS'))
+
+@
+% 
+
+Summarize the data frame that includes only our variables of interest.
+<<summarize-out>>=
+#summary command
+summary(out)
+#str() command
+str(out)
+@
+
+\subsubsection{Base R}
+Base R includes a \texttt{subset()} command which has a select argument.  With this you can select variables to be taken out.  
+<<subset, eval=F, echo=T>>=
+#subset
+subset(ces, select=variables)
+
+@
+
+Note, however.  When using the \texttt{subset()} command, you lose the variable labels of what you are dealing with. It's not a huge deal, as we saved them all from the ces data frame at teh beginning.  But, in general, once you jump into the Hadleyverse, it's best to stay there for reasons like this.  
+
+
+Notice that each variable is of the labelled class.  You can see that each has the attribute label which appears to be the question text and the attribute labels which appears to be the numeric values that each variable has.  
+
+There are many useful ways for turning labelled class variables to proper R class variables, either numeric or factor.  It is useful to go through this variable by variable, because doing this quickly can mean information is lost and the workflow uncomplicated.  We'll start with the first variable.
+
+\subsection{Subsetting Rows}
+Often we want to subset a selection of variables, but we want particular rows.  Again, there are two ways to do this. 
+Suppose we want to spit the new out data frame into men and women.  We can refresh our memories of what variables we are looking at by using \texttt{lapply()} and the \texttt{attr()} command.
+<<out-variable-labels>>=
+lapply(out, function(x) attr(x, 'label'))
+lapply(out, function(x) attr(x, 'labels'))
+
+@
+
+\subsubsection{Hadleyverse}
+The relevant command in the Hadleyverse is \texttt{filter()}. We saw above that the variable is currently RGENDER and men are coded as 1.
+<<filter-gender>>=
+#Filter
+men<-filter(out, RGENDER==1)
+#check
+summary(men)
+@
+
+
+\subsubsection{Base R}
+We can use the \texttt{subset()} command in Base R as well. 
+<<subset-gender>>=
+#subset
+men<-subset(out, RGENDER==1)
+#check
+summary(men)
+@
+
+\subsubsection{Combining Criteria}
+We can combine critiera to subset data frames with Boolean expressions. R's boolean expressions are fairly intuitive (see Table \ref{boolean}). 
+
+\begin{table}
+\begin{center}
+\caption{List of R's boolean expressions}
+\label{boolean}
+\begin{tabular}{c|c}
+\hline
+and & \&  \\
+or & | \\
+equals & == \\
+does not equal & != \\
+\end{tabular}
+\end{center}
+\end{table}
+
+
+
+\subsection{Recoding Data}
+We can refresh our memories of what variables we are looking at by using \texttt{lapply()} and the \texttt{attr()} command.
+<<out-variable-labels-2>>=
+lapply(out, function(x) attr(x, 'label'))
+@
+
+Variables PES74 to PES78 are all news consumption variables: tv, newspapers, radio , internet and internet discussion. 
+\subsection{PES15\_74}
+First we start by looking at the labels and producing a table of the variable.
+<<recode-newspapers>>=
+#First look at the labels
+attr(out$PES15_74,'labels')
+#Also look at the label 
+attr(out$PES15_74, 'label')
+#second produce a table of the variable
+table(out$PES15_74)
+
+@
+
+The key thing that needs to happen here is to turn the values 98 and 99 into missing values.  The \texttt{recode()} command does this quickly.  Also, the variable names can be a bit of a pain.  Rather than storing them as PES15\_74, it might be useful to store them with meaningful names. So, let's just make save the results a new variable called newspapers.
+<<recode-tv>>>=
+#recode
+out$tv<-recode(out$PES15_74, "98:99=NA")
+@
+One thing that is \emph{extremely} important to note.  Good programming always includes validation checks when you manipulate data.   The easy way to do this is to cross-tabulate the new variable by the old variable.
+<<crosstab-tv>>=
+#crosstab the old variable to the new one. 
+table(out$tv, out$PES15_74)
+
+#Check its class
+class(out$tv)
+@
+
+That looks pretty good.  Except, it hasn't changed the class.  We want it to be numeric, not labelled. 
+
+<<coerce-class>>=
+out$tv<-as.numeric(out$tv)
+@
+
+
+\subsubsection{Segue - Missing Values}
+Missing values are coded in R with the string NA.  It is the only reserved string in R.  Importantly, you can check which values are missing with the function \texttt{is.na()}.
+<<missing-values,echo=T, results='hide'>>=
+#Which are missing values
+is.na(out$tv)
+#Count missing values
+table(is.na(out$tv))
+@
+
+Now we can move on to the next variable.
+
+\subsection{PES15\_75}
+First look at the labels
+<<check-newspapers>>=
+attr(out$PES15_75, 'labels')
+#We can also check that we really are dealing with the newspapers variable
+attr(out$PES15_75, 'label')
+#Produce a table
+table(out$PES15_75)
+@
+
+Basically it looks like we just need to do the same as in the previous variable. Rather than going through this step-by-step, I'm going to show you a way to automatically recode a series of variables.  
+
+
+\subsubsection{Pro Tip 2}
+The keys to making this work are 1) subset out -- again -- the news consumption variables 2) being absolutely sure the same recode function works the same way on each variable 3) using \texttt{sapply()} to apply the same recode function to each variable.  4) reinserting the recoded variables back into the original data set. 
+
+First select out the variables to be recoded
+<<pro-tip-2-1, results='markup'>>=
+#subset out
+news<-out[,1:5]
+#Could also use select
+news<-select(out, 1:5)
+#
+head(news)
+@
+
+Then, apply the \texttt{recode()} function. \texttt{sapply()} applies the function to each element of its argument. IN this case, to each variable. It returns a matrix, not a data frame. 
+<<pro-tip-2-2>>=
+news<-sapply(news, function(x) recode(x, "98:99=NA"))
+#note sapply() always returns a matrix.  
+#We want a data frame so we can make some variablenames.
+#Convert it this way
+news<-data.frame(news)
+
+@
+Now we have to change the names of the recoded variables, because we don't want to overwrite the original variables. 
+<<pro-tip-2-3>>=
+names(news)<-c('tv', 'newspapers', 'radio', 'internet', 'exchange')
+@
+<<pro-tip-2-4>>=
+summary(out)
+@
+
+<<pro-tip-2-5, R.options=list(max.print=10)>>=
+out
+@
+Then, combine the two
+<<pro-tip-2-6>>=
+out<-data.frame(out, news)
+@
+
+
+\subsection{CPS15\_78}
+The next variable is CPS15\_78
+
+<<echo=TRUE, results='hide', R.options='max.print=100'>>=
+#summarize
+summary(out$CPS15_78)
+#check attributes
+attr(out$CPS15_78, 'label')
+@
+So, this is the age variable.  We need to do two things here to make it useful.  But we can do them with everything that we have learned so far.
+
+First, we need to recode the values 9998 and 9999 to be missing values.  Second, we need to turn the year of birth into the age.  
+\begin{assignment}\begin{itemize}
+  \item Turn the values 9998 and 9999 in out\$CPS15\_78 into missing values
+  \item Then convert the YearofBirth Variable into a meaningful variable we might use in a regression
+\end{itemize}\label{assignment15}
+\end{assignment}
+
+<<solution15-hidden, echo=F, results='hide'>>=
+#Convert missing avlues
+out$yob<-recode(out$CPS15_78, "9998:9999=NA")
+#subtract birth year from 2015
+out$age<-2015-out$yob
+#Check class
+class(out$age)
+#convert to numeric
+out$age<-as.numeric(out$age)
+@
+
+\subsection{CPS15\_79}
+The next variable is CPS15\_79.
+
+<<summarize-cps15-79>>=
+#
+summary(out$CPS15_79)
+attr(out$CPS15_79, 'label')
+attr(out$CPS15_79, 'labels')
+@
+
+This is the education variable.  There are multiple ways we can handle this.  As it stands now, we could keep it with 11 categories and treat it as a continuous variable. We would still have to deal with the missing values of don\\'t know and refused.  This is the easiest way.  
+<<education-as-numeric>>=
+#Recode
+out$education<-recode(out$CPS15_79, "98:99=NA")
+#Check class
+class(out$education)
+out$education<-as.numeric(out$education)
+#check
+table(out$education, out$CPS15_79)
+#
+@
+If we want to turn education into a categorical variable, we can just group the numbers. We will convert the \texttt{out\$education} variable, because it has already turned the missing values into NAs, so why repeat that work?
+
+<<education-as-factor>>=
+#The core command is as follows
+out$education2<-recode(out$education, 
+                       "1:5='HS or less' ; 
+                       6:8='College or less' ; 
+                       9:11='University'")
+@
+
+
+But there are some wrinkles.First we want to clearly specify the new variable is going to be a factor
+<<education-as-factor-2>>=
+out$education2<-recode(out$education, 
+                       as.factor.result=TRUE,
+                       "1:5='HS or less' ;
+                       6:8='College or less' ; 
+                       9:11='University'")
+@
+
+If we take a look at what we have, here, we see a small problem.
+
+<<summary-education2>>=
+#Summary
+summary(out$education2)
+#Check the levels of the categorical variable
+#this is how R *really* deals with factors, unlike SPSS and Stata
+levels(out$education2)
+@
+
+Because we have turned \texttt{education2} from a labelled class variable to a proper R factor, it is no longer coded with numbers and with value labels attached to them. The underlying data are now character strings. Watch what happens when we print out the first 10 cases of the original education and then the new \texttt{education2} variable.
+<<print-education-2>>=
+#original
+out$CPS15_79[1:10]
+#The recoded
+out$education2[1:10]
+@
+
+The thing I want to drive home here is that we have to reorder the levels of education2 so that they make sense. This can be done in a number of ways.  
+It can be done at the original \texttt{recode()} command. 
+
+<<education2-levels-1>>=
+out$education2<-recode(out$education, 
+                       as.factor.result=TRUE,
+                       "1:5='HS or less' ; 
+                       6:8='College or less' ; 
+                       9:11='University'", 
+                       levels=c('HS or less', 
+                                'College or less', 'University'))
+@
+
+Or, it can be done, \emph{after} the \texttt{recode()} command. 
+<<factor-education2, R.options=list(max.print=10)>>=
+out$education2<-factor(out$education2, 
+                       levels=c('HS or less', 
+                                'College or less', 'University'))
+@
+
+With this command, you can also add in an argument to specify the factor as an ordinal variable.
+<<factor-education3, R.options=list(max.print=15)>>=
+factor(out$education2, 
+       levels=c('HS or less', 'College or less', 'University'), 
+       ordered=TRUE)
+@
+
+However, to be honest, I have never really gotten a lot out of this particular argument. It usually suffices just to ensure the factor levels are in the most meaningful order possible. 
+
+Statistically, please note, the first level in the levels will be the reference category for any modelling, so if you want to change the reference category, remember the \texttt{factor()} command and just respecify the order of the levels. 
+
+The key thing at this stage though is that the levels must be entered \emph{exactly} as they have been coded. Otherwise, the data will be lost. 
+
+\subsection{PES15\_3}
+The next variable is PES15\_3. 
+<<vote-summary>>=
+#summarize
+summary(out$PES15_3)
+#Check variable labels
+attr(out$PES15_3, 'label')
+#Check value labels
+attr(out$PES15_3, 'labels')
+
+@
+This one is pretty easy.  We just want to recode 1 to be 'Yes', 2 to be 'No' and 8 and 9 to be NA.  S
+The one thing I should make you aware of, is there is currently a slight bug in haven.  The easy workaround is to wrap the variable you are trying to recode in \texttt{as.numeric()}
+<<recode-vote>>=
+#recode
+out$vote<-  recode(as.numeric(out$PES15_3), 
+                 "1='yes'; 5='no'; 8:9=NA", 
+                 levels=c('no', 'yes'), as.factor.result=T)
+#check class
+class(out$vote)
+@
+
+\subsection{CPS15\_92}
+The next variable is CPS15\_92. Do the same thing to see what we need to do. 
+
+<<income-summary<>>=
+summary(out$CPS15_92)
+attr(out$CPS15_92, 'label')
+attr(out$CPS15_92, 'labels')
+@
+
+So, here we need to turn 998 and 999 into missing values. 
+
+<<recode-income>>=
+out$income<-recode(as.numeric(out$CPS15_92), "998:999=NA")
+#Check class
+class(out$income)
+#Check
+summary(out$income)
+@
+
+\subsection{RGENDER}
+This is an easy one.
+
+<<summarize-gender>>=
+#Check summary
+summary(out$RGENDER)
+#labels
+attr(out$RGENDER, 'labels')
+#Table
+table(out$RGENDER)
+
+
+@
+Because there are no missing values and no recodes necessary for this variable, all we ahave to do is coerce this to a factor.  Because it is a labelled variable, we have to use a coercion function from haven. 
+Also, let's assign it a new name. It's good practice to never overwrite it. 
+<<recode-gender-as-factor>>=
+out$gender<-as_factor(out$RGENDER)
+
+@
+And check the results
+<<summaryize-gender-recode>>=
+#summary
+summary(out$gender)
+#Table
+table(out$gender, out$RGENDER)
+#levels
+levels(out$gender)
+@
+
+
+We can check the structure of our working data frame one last time.  
+<<check-final-structure>>=
+str(out)
+@
+
+One thing that is apparent is that we have a mix of variables.  The original variables extracted directly from \texttt{ces} and the variables that have been classed and coded as we needed.  We could carry on this way, but sometimes, to keep things neat and tidy, we can just out-select the original variables.  If we run quick \texttt{names()} check, then we see that the first 10 variables are original, unrecoded variables, that we probably won't use any more. So, we can just select variables 11 to 23.  There are many ways to do this.
+
+<<check-names>>=
+names(out)
+@
+
+\begin{assignment}
+
+\begin{itemize}
+\item  Try all of the following commands.  As you go, save the results of your command in a throw-away object, like out1, or out2.  When you find one that appears to work, go back and re-save it as out. 
+\begin{enumerate}
+  \item \textbf{Base R} Try using the square bracket notation to pick out columns 11 to 23. 
+  \item \textbf{Hadleyverse} Try using the \texttt{select()} command and the : colon notation which enables you to select a range of columns.
+\item \textbf{Hadleyverse 2} Try using the \texttt{select() } command naming the variables, one by one, without quoting them, separating them by commas. 
+\end{enumerate}
+
+
+<<solution16-hidden, echo=F, R.options=list(max.print=10), results='hide'>>=
+out[,11:23]
+
+select(out, 11:23)
+
+select(out, tv, newspapers, internet, exchange, tv, radio, age, education, education2, income)
+
+out<-select(out, -one_of(variables))
+@
+
+\end{itemize}\label{assignment16}
+\end{assignment}
+
+See what is left, to make sure it's been successful.
+
+<<check-after-out-select>>=
+names(out)
+@
+
+Let's also delete that second tv.1 variable.  We don't need it.  One way to do this with the \texttt{select() }command is to include the - operator, which returns the opposite of what follows.
+<<out-select-tv.1>>=
+#out select -tv.1
+out<-select(out, -tv.1)
+@
+
+\subsection{Composite Variables}
+Often, we want to combine the results of a series of variables into one.  This is very easy in R and makes use of the \texttt{apply()} function.  In this case, let's create a composite variable of media consumption that measures the mean number of days on which a person consumes some sort of media.  So a person who reports that they consume newspapers on 7 days a week watch TV news 7 days a week and listsens to news on the radio 7 days a week is going to get the highest possible value.  
+\begin{assignment}
+\begin{itemize}
+\item Using the \texttt{apply()} function, calculate the average media consumption for each respondent. Recall that we have all of these variables in the \texttt{ news}  data.frame.
+\item Attach this to the out data frame and call it \texttt{media}.
+\item Produce a summary of it. 
+\end{itemize}\label{assignment17}
+\end{assignment}
+<<solution17-hidden, echo=F, results='hide'>>=
+
+#Calculate the mean media consumption for each person. Remember 1, applies the function to each row.
+apply(news, 1,mean)
+#Save it to out with the name out$media
+out$media<-apply(news, 1, mean)
+#summary
+summary(out$media) #note the max is 7, which is correct
+@
+Whew.  I am tired.  But as this New York Times story suggests \url{http://www.nytimes.com/2014/08/18/technology/for-big-data-scientists-hurdle-to-insights-is-janitor-work.html} 50 to 80\% of data analysis is data wrangling, preparation or `munging' whatever that is. 
+
+\section{Data Analysis}
+\subsection{Descriptive Statistics}
+There are quite a few tools that readily produce descriptive statistics for quick analysis and publication. 
+\subsubsection{stat.desc()}
+In the \texttt{pastecs} library, the \texttt{stat.desc()}command works well.
+
+<<describe-with-pastecs>>=
+describe1<-stat.desc(out, basic=F)
+describe1
+@
+
+One downside here is that the scientific notation can be awkward to read.  This can be adjusted by setting \texttt{options()} in R (see ?options for help and instructions and this webpage \url{http://www.ats.ucla.edu/stat/r/faq/basic_desc.htm}. 
+
+\subsubsection{describe()}
+In the \texttt{psych()} package, the describe command works very well.
+
+<<describe-with-psych>>=
+describe(out)
+@
+
+\subsubsection{Stargazer}
+Lastly, there is the very important \texttt{stargazer} package. This package is really designed to produce high quality publication tables of regression results out of R's rather unwieldy computer output.  However it also has the capability of producing descriptive statistics. 
+
+<<staragazer-describe>>=
+stargazer(out, type='text')
+@
+\subsubsection{Segue: Getting Data out of R}
+Historically, it has been a little bit difficult getting resutls out of R, although it is getting much easier.  For simply-formatted tables, data.frames and matrices such as those produced by \texttt{stat.desc()} and \texttt{describe()} above, the simplest command is \texttt{write.csv()} . This writes out an R object into a comma separated file. You specify the file name:
+<<write-out-data, eval=F>>=
+#syntax for 
+write.csv(object_name, file='path_name')
+@
+
+Objects produced by \texttt{stargazer()} are a little different to get out of R.  They are primarily meant to produce \LaTeX code.  \LaTeX is a markup language that is designed to facilitate the publication of scientific and mathematical equations and has now drifted to be an important part of scientific communication in general.  There are fairly user-friendly workflows that link R to \LaTeX (the document you are reading uses one of them.) But it is far beyond the scope of this course.  
+
+That said, stargazer can also produce html files, which are very easy to copy and paste into Microsoft Word.  
+All you do is specify\texttt{ type='html'} and specify a path name (see below) to the `out=' argument.  Then, open the file in a browser and select copy. Paste the results from the results in Microsoft Word. 
+
+\subsection{Measures of Association}
+\subsubsection{Two categorical variables}
+You can produce crosstabulations of two categorical variables with the \texttt{table()} command. 
+<<gender-vote>>=
+#create gender-vote-table
+gender_vote<-table(out$gender, out$vote)
+
+@
+You can use the \texttt{prop.table()} command to create table percentages.  It can produce corner-percentaging default, row percentages , specify 1 or column percentages, specify 2.  You can round the results to 2 with the \texttt{round()} function and multiply by 100 for formatting purpose 
+<<gender-vote-percentage>>=
+prop.table(gender_vote, 1)
+@
+
+
+\begin{assignment}
+\begin{itemize}
+  \item Create a frequency table and then a table that shows the percentage of voters versus non-voters per level of education. 
+  \item Write it out to a csv file. \label{assignment18}
+\end{itemize}
+
+\end{assignment}
+
+<<solution18-hidden, eval=F, results='hide', echo=F>>=
+#education vote table
+education_vote_table<-table(out$education2, out$vote)
+#row percentages
+education_vote_table<-prop.table(education_vote_table,1)
+#write
+write.csv(education_vote_table, file='~/Desktop/education_vote.csv')
+@
+You can also use the \texttt{xtabs()} command to produce three-way tables.
+
+<<three-way-vote-education-gender, results='markup'>>=
+xtabs(~vote+education2+gender, data=out)
+@
+
+However, I tend not to find this very useful because it is hard to extract out of R and it is hard to get the cell percentages.  
+
+Producing cross tabulations like in SPSS that simultaneously show the number of cases, the percentages and the residuals is easy and hard in R.  
+
+The function \texttt{gmodels::CrossTable()} does it admirably except it basically doesn't allow you to export its results out of R.  Very frustrating.  Moreover, it doesn't produce three way tables.
+You are much better off visualizing data, which we will describe below. 
+
+\subsubsection{Numeric variables}
+The easiest way is the \texttt{cor()} function, which produces a correlation of two numeric variables.  The default is the Pearson correlation, but it can also produce Spearman correlation. . One key thing about the \texttt{cor() }function is that it is very sensitive to missing values.  You can do casewise deletion of missing values by specifying use='complete'
+
+<<correlate>>=
+#Correlation
+cor(out$newspapers, out$income, use='complete')
+@
+
+You can also use \texttt{cor.matrix()} to produce a correlation matrix of several numeric variables.  It simply takes a matrix of numeric variables as an argument. Note: all variables must be numeric. If there is a actor in there there function will properly choke. 
+
+\begin{assignment}\begin{itemize}
+\item Produce a correlation matrix of all the \textbf{media consumption} variables and the numeric variables for \textbf{age, income and education}.  Use one of the ways of subsetting the variables of interest out again to supply as an argument. Be sure to save the correlation matrix with a meanginful name. 
+\end{itemize}\label{assignment19}
+\end{assignment}
+
+<<solution19-hidden,echo=F, results='hide'>>=
+#correlation matrix
+cor.out<-select(out, tv, newspapers, radio, internet, exchange, age, education, income)
+#produce correlation matrix
+cor(cor.out, use='complete')
+@
+
+Correlation matrices can be easily written out with \texttt{write.csv()}.
+
+\subsubsection{Pro Tip 3}
+The function \texttt{rcorr()} in the \texttt{Hmisc} package produces a corelation matrix and p-values calculating the statistical significance of any given correlation. 
+
+
+\subsection{Linear model}
+Obviously the workhouse of the social sciences is the linear regrssion. It is implemented in R with the function \texttt{lm()}. It takes a formula notation which is universal throughout R .  Formulas have the form \texttt{y \~ x1 + x2}. 
+
+<<model1>>=
+#produce model
+model1<-lm(media~education, data=out)
+#summary
+summary(model1)
+@
+
+
+
+The Estimate column in the summary is the unstandardized beta ceffiient for the respective variable.  It is followed by the standard error, the t-statistic for the coefficient and the p-value for that t-statistic which is used for assessing statistical significance. 
+
+Additional terms can be added to the model with the +.  
+
+\begin{assignment}Make two new models, adding in successively age and income , save them as \texttt{model2 }and \texttt{model3}. \label{assignment20}
+
+
+\end{assignment}
+
+<<solution20-hidden,results='hide', echo=F>>=
+model2<-lm(media~education+age, data=out)
+model3<-lm(media~education+age+income, data=out)
+@
+\subsubsection{Getting Linear Model Results out of R}
+This is where \texttt{stargazer} really shines.  It can produce very nicely formatted regression tables for one or several models, just by supplying a series of model names to the function. 
+\begin{assignment}
+\begin{itemize}
+\item Use the \texttt{stargazer()} function to produce a table that summarizes the results of all three models.  
+\item Save it as an html file somewhere on your desktop.  
+\item Copy and paste it into Microsoft Word.  
+\end{itemize}\label{assignment21}
+\end{assignment}
+
+
+\subsubsection{Pro Tip 4}
+stargazer has a wealth of formatting commands, to change the caption at the top of the table, which summary statistics are produced, whether the standard errors are printed below or next to the coefficients, whether the model names are printed etc. It also has an argument (\texttt{style=}) that accepts a character vector (see \texttt{?stargazer}) that corresponds to a series of academic journals with preformatted styles. 
+
+\subsubsection{Interactions}
+Interaction effects can be included in the model syntax with a : between two terms you wish to interact. 
+
+<<interactions>>=
+#model4
+model4<-lm(media~education+age+income+age:income, data=out)
+#summary
+summary(model4)
+@
+
+\subsubsection{Categorical Variables}
+It is easy to include categorical variables. Some of the challenges are in setting and interpreting the reference levels.  
+<<model5>>=
+#Make model5
+model5<-lm(media~education+age+income+gender, data=out)
+#Summarize model5
+summary(model5)
+@
+
+
+\subsubsection{Analysis of Variance}
+For the psychologists in the audience, R has a built-in but little used function \texttt{aov()} that conducts an analyis of variance test.  However, this function only works for balanced designs.  For unbalanced designs, you are better off using the \texttt{Anova()} function in the \texttt{car} library. However, there, you have to pay special attention to which types of sums of squares you are using.   To be honest, you are better off simply fitting a linear model with the contrasts for factors applied to suit your hypotheses and to combine this with a visual inspection of group means.  
+
+The following fits a linear model with education and gender as a variable.  However, it compares the effects on media consumption of being female to male and of having a college or a unviersity level education compared to high school.
+<<model6>>=
+#analysis of variance m odel
+model6<-lm(media~education2+gender+education2:gender, data=out)
+#summary6
+summary(model6)
+#Anova
+Anova(model6)
+#Note use of capital A
+@
+
+If, for some reason, the university-to-high school comparison is not suitable to our hypotheses, we can change it by setting a new reference level for the variable\texttt{ education2}. 
+<<refactor-model6>>=
+#refactor
+out$education2<-factor(out$education2, 
+                       levels=c('College or less' , 'HS or less', 'University'))
+#refit the model
+model6a<-lm(media~education2+gender+education2:gender, data=out)
+#summary
+summary(model6a)
+@
+
+\subsection{General Linear Model}
+It's very easy to fit a logistic regression model. The key function is the \texttt{glm()} function. The formula is specified in the same way as in a linear model. The only other addition is the ''family'' argument which has to be set to ''binomial''.
+
+<<model7>>=
+#Fit model
+model7<-glm(vote~education, family='binomial', data=out)
+#Summarize
+summary(model7)
+@
+
+\begin{assignment}\begin{itemize}
+  \item Produce two more models adding in age and income successively.  
+  \item Use \texttt{stargazer()} to produce a table that compares the results of all three. 
+\end{itemize}\label{assignment22}
+
+\end{assignment}
+
+<<solution22,results='hide', echo=F>>=
+#model8
+model8<-glm(vote~education+age, family='binomial', data=out)
+#model9
+model9<-glm(vote~education+age+income, family='binomial', data=out)
+#stargazer
+stargazer(model7, model8, model9, type='text')
+@
+
+
+\subsection{Data Visualization}
+Base R's graphics are built around the \texttt{plot()} command.  The Hadleyverse's \texttt{ggplot2} plotting function is much more systematic and built on fairly consistent principles.  
+
+The \texttt{ggplot()} command is the basic command which contains the basic parameters of a graph and then specifics are added to it.  Below, we specify the undelrying data -- \texttt{out} -- and the two most important aesthetics of a graph, the x and the y variable.  Note: in ggplot2 ``aesthetics'' has a very particular meaning. Namely, it maps particular visual features of a plot (i.e. color, shape of points, type of line, the fill of bars) to the values of variables (see Figure \ref{fig:make-plot}).
+<<make-plot, fig.cap='Basic plot', fig.align='center'>>=
+ggplot(out, aes(x=income, y=newspapers))
+
+@
+But nothing appears.  This is because the second core aspect of the plot is the \texttt{geom}.  These are the graphical types of representing the relationship between x and y (see Figure \ref{fig:point})
+<<>>=
+@
+
+<<point, fig.cap='Scatterplot', fig.align='center'>>=
+#Add points
+ggplot(out, aes(x=income, y=newspapers))+
+  geom_point()
+
+@
+
+There are a lot of different \texttt{geoms} built into \texttt{ggplot2}. Now that the package has been made fully extendible, there are many more to come.  Table \ref{geoms} lists just a few of them.
+
+\begin{table}
+\caption{Partial list of geoms}
+\label{geoms}
+\begin{tabular}{c|c}
+Command & Geom\\
+\hline
+geom\_bar() & Bar graph\\
+geom\_histogram() & Histogram\\
+geom\_line() & line graph\\
+geom\_errorbar() & Draw confidence intervals \\
+geom\_jitter() & Jitter points for visual ease \\
+geom\_smooth()& plot a smooth via several statistical methods \\
+geom\_abline() & add a vertical or horizontal line\\
+geom\_boxplot() & boxplot\\
+geom\_ribbon() & ribbon of color through x and y coordinates\\
+geom\_map() & draw a map from properoly supplied coordinates
+
+\end{tabular}
+\end{table}
+
+
+
+In this case, we can add a jitter geom to the points to make a little bit of distance between each and make the relationship more visible (See Figure \ref{fig:jitter}). 
+<<jitter, fig.cap='Jittered', fig.align='center'>>=
+#Add jitter
+ggplot(out, aes(x=income, y=newspapers))+
+  geom_point()+geom_jitter()
+@
+Add in a smoothing geom to see a line betweeen the two variables. This smooth can be set with a few different methods: lm equals a linear regresion line, loess equals a locally weighted regression line and glm fits a generalized linear model regression line (see Figure \ref{fig:loess})
+<<loess, fig.cap='Smooth', fig.align='center'>>=
+ggplot(out, aes(x=income, y=newspapers))+
+  geom_point()+geom_jitter()+geom_smooth(method='loess')
+
+@
+
+Virtually every aspect of the plot is adaptable.  We can add a title and change the x-axis and y-axis labels like this. Notice that in the code, you can split a long main title into two lines with the newline character `\\n' (See Figure \ref{fig:change-title})
+<<change-title, fig.cap='Modified labels', fig.align='center'>>=
+ggplot(out, aes(x=income, y=newspapers))+
+  geom_point()+geom_jitter()+geom_smooth(method='loess')+
+  labs(title='Income and Newspaper\nReadership', y='Newspapers' ,x='Education')
+
+@
+
+
+
+We can also in a grouping variable.  Let's say for gender (see Figure \ref{add-grouping-variable}).  
+
+<<add-grouping-variable, fig.cap='Grouping variable', fig.align='center'>>=
+#Add gender as group 
+ggplot(out, aes(x=income, y=newspapers, group=gender))+
+  geom_point()+geom_jitter()+geom_smooth(method='loess')+
+  labs(title='Income and Newspaper\nReadership', y='Newspapers' ,x='Income')
+
+@
+
+
+Notice what has happened here: We have two smooths through the plot, as opposed to one, so presumably this is reflecting the smooths through the men and the women.  But they are not distinguishable from each other.  The reason is that we need to provide an aesthetic to map to each of the two values of the gender variable. Specifying that gender is the grouping variable is not enough. We could vary the color by value of gender.  Because we are changing the color of the points, we are mapping the aesthetic in geom\_point() and in geom\_jitter() (see Figure \ref{fig:add-color-aesthetic})
+
+<<add-color-aesthetic, fig.cap='Vary the Color', fig.align='center'>>=
+ggplot(out, aes(x=income, y=newspapers, group=gender))+
+  geom_point(aes(col=gender))+
+  geom_jitter(aes(col=gender))+
+  geom_smooth(method='loess')+
+  labs(title='Income and\nNewspaper Readership', y='Newspapers' ,x='Income')
+
+@
+
+Or, we could vary the linetype by gender (see Figure \ref{fig:aes-line-color}).
+
+<<aes-line-color, fig.cap='Vary the linetype',fig.align='center'>>=
+ggplot(out, aes(x=income, y=newspapers, group=gender))+
+  geom_point(aes(col=gender))+geom_jitter(aes(col=gender))+
+  geom_smooth(method='loess', aes(col=gender))+
+  labs(title='Income and\nNewspaper Readership', y='Newspapers' ,x='Income')
+
+@
+
+
+The plot can be made even more complicated (or informative) by \emph{facetting}.  This produces panels of plots based on yet another grouping variable.  So the following facets by education (see Figure \ref{fig:facet-grid}). 
+<<facet-grid, fig.cap='Facetted by a third grouping variable', fig.align='center', fig.width=8, fig.height=3>>=
+
+ggplot(out, aes(x=income, y=newspapers, group=gender))+
+  geom_point(aes(col=gender))+geom_jitter(aes(col=gender))+
+  geom_smooth(method='loess', aes(col=gender))+
+  labs(title='Income and\nNewspaper Readership', y='Newspapers' ,x='Income')+
+  facet_grid(~education2)
+
+@
+
+\begin{assignment}\begin{itemize}
+  \item First, we want to re-factor education2 to get the order of the levels right. 
+\item Second, A few high-income cases are distorting the picture of the relationship.  So let's subset out people who earn more than 200000. Subset out and save it as out2.
+\item Subset out2 to remove missing values and save it as out2.  
+\item replot the above plot.
+\end{itemize}\label{assignment23}
+\end{assignment}
+
+
+
+\begin{assignment}
+Produce a bar graph of the number of people who voted by level of education. Factor the levels so that they are in order HS to College and University.\label{assignment24}
+\end{assignment}
+
+
+
+
+geom\_histogram() can be used to produce a histogram (see Figure \ref{fig:histogram}).The option binwidth can be used to narrow the width of the histograms bins (see Figure \ref{fig:histogram2}).  
+<<histogram, fig.aligh='center', fig.cap='Basic Histogram'>>=
+#Make a histogram, binwidth=1
+ggplot(out, aes(x=newspapers))+geom_histogram(binwidth=1)
+@
+<<histogram2, fig.align='center', fig.cap='Facetted by gender'>>=
+#group by gender
+ggplot(out, aes(x=newspapers))+geom_histogram(binwidth=1)+facet_grid(~gender)
+@
+
+
+\texttt{ggplot()} really starts to sing, however, when we combine it with some of the newest innovations in the hadleyverse, namely the \emph{dplyr} and the \emph{tidyr} package.  To introduce these, it is crucial to understand the difference between long and wide data.  
+
+In long (tidy) data, each column is one variable and each row is one observation.   Currently our data is a mix of long and wide data.  
+<<print-head-out>>=
+head(out)
+@
+
+In particular, the \texttt{tv, newspapers, radio, internet, exchange} variables are actually all different observations on the same underlying variable, which is media consumption.  In tidyr, the gather() function takes columns that you would like to collapse into long format.  The syntax is gather(data\_frame, name\_of\_new\_variable, name\_of\_value\_variable, variables\_to\_be\_gathered)
+
+<<gather-out>>=
+#gather out
+out2<-gather(out, Variable, Value, 
+             c(tv, newspapers, radio, internet, exchange))
+
+@
+
+Now, out2 looks like this. 
+<<head-out2>>=
+#head out2
+head(out2, 15)
+@
+
+We are doing this for a very good reason.  \texttt{ggplot2} is built, from the ground up, to work best with tidy data.  
+\begin{assignment}
+Use the new dataset \texttt{out2} to draw a histogram of \emph{each} media consumption variable. Hint: facet by \texttt{Variable}.  Pay attention to the names of the new variables\label{assignment25}
+\end{assignment}
+
+Now, you should be able to see the opportunities for data visualization here.  
+
+\begin{assignment}
+Visualize the distribution of different types of media consumption by facetting by education and gender. Try also to recode age or income into categorical variables and facetting by these. Note; facetting really only works with categorical variables.\label{assignment26}
+
+\end{assignment}
+
+\subsection{Group Means}
+Now, we can extend this even further to calculate different types of group means.  The \texttt{tidy} package is meant to put wide data into long (tidy) package.  It and \texttt{ggplot2} work hand-in-hand with the dplyr package which is used to separate out data into gropus and calculate statistics. 
+
+The first thing that is usually done with \texttt{dplyr} is to create analytical groups.  suppose we are interested in the average media consumption by gender and education.  
+<<make-groups>>=
+out<-group_by(out, gender, education2)
+
+@
+The next to do is to summarize these groups with a descriptive statistic, say the mean, the number of cases and the standard deviation.  To do this, we use the \texttt{summarize() } command.
+<<make-summary-statistics>>=
+out3<-summarize(out, n=n(), sd=sd(media, na.rm=T), avg=mean(media, na.rm=T))
+@
+
+We can use these statistics now to calculate the standard error of the mean.  The trikc here is, we are no longer summarizing groups, but we are adding a column to an existing data frame.  We have all the statistics we need in the variables n, sd and avg.   To do this we use the \texttt{mutate()} command. 
+
+<<make-se>>=
+out3<-mutate(out3, se=sd/sqrt(n))
+@
+
+\begin{assignment}
+Draw a plot of the group means for average days of media consumption by gender and education, with errorbars. \label{assignment27}
+
+\end{assignment}
+
+\subsection{Predicted Values}
+There are two ways to visualize the effects of the predictor variables on the outcome variable.  One way is to use the \texttt{predict()} function to feed a hypothetical data set to the model and to use the model to produce predicted values. These can then be plotted.
+So, if we take model3, which has age, income and education as terms, we want to visualize what the effect of education is.  To do that, we need to provide a data frame that has values of 1 to 11 for education, plus values for age and income.  Because we are interested in seeing the value of education, we will set those at their mean.  
+<<predict-data>>=
+#Make a new data frame with education as a variable from 1 to 11
+model.data<-data.frame(education=seq(1,11,1))
+#Add in the mean age variable, use the rep() function to repeat it 11 times
+model.data$age<-rep(mean(out$age, na.rm=T),11)
+#Add in income 
+model.data$income<-rep(mean(out$income, na.rm=T),11)
+
+@
+
+We then use the \texttt{predict()} function and feed this data frame as newdata and use model3 to do the predicting. Also, by selecting \texttt{se.fit} to be TRUE returns the standard error of the predicted values, which we can use to construct confidnece intervals for predicted values.  
+<<predicted-values>>=
+#Feed these to model three 
+predicted.values<-predict(model3, model.data, se.fit=T)
+#Turn into a data frame
+predicted.values<-data.frame(predicted.values)
+@
+
+<<draw-predicted-plot-values>>=
+ggplot(predicted.values, aes(x=seq(1,11,1),y=fit))+
+  geom_point()+ylim(c(0,7))+geom_line()+
+  geom_errorbar(aes(ymin=fit-(1.96*se.fit), ymax=fit+1.96*se.fit), width=0.2)
+
+@
+
+\begin{assignment}
+\begin{itemize}
+\item Model 5 contains gender as a term alongside education, age and income.  Produce the predicted values for men and women, setting education, age and income at their mean values.  
+\item Draw the plot with confidence intervals
+\end{itemize}\label{assignment28}
+\end{assignment}
+
+
+The second way is to use the \texttt{effects} package produced by John Fox.  
+The core command here is the \texttt{effects()} command which takes a term, in quotes, and a linear or generalized linear model (such as a logistic regression) and automatically produces predicted values given a set of hypothetical predicted values.  
+
+So, if we take model4, which includes the interaction term age:income and age, education and income, the command can produce the effects of different values of age and income.  
+<<model4-effects,include=T>>=
+#Produce model 4 effects
+model4.effects<-effect('age:income', model4)
+#inspect
+model4.effects
+@
+These are the predicted values for a series of default levels.  These The\texttt{effect()} command produces the predicted values for the predictor variables automatically, based on the range of existing values.  so it has produced the effects for ages 20 through 90 and for incomes 0 through 1000.  There probably is a lot more variation between 0 and 200, so we can specify the xlevels that are used to produce teh effects. 
+
+objects produced by \texttt{effects() }can be sent to the Base R command for plotting which is \texttt{plot()} for automatic plot.
+
+<<model4-plot-effects, fig.cap='Effects plot from effects package', fig.align='center', fig.width=6, fig.height=4>>=
+plot(model4.effects)
+@
+
+Each panel in the plot represents one value of one of the two interaction terms (in this case income). It's value is roughly highlighted by the orange line in the colored strip.  So the bottom-most left panel is the lowest level of income, in this case, 0.  The x-axis labels are the age values.  The shaded grey area is the 95\% confidence interval for the predicted variables.  
+
+We can modify which xlevels are used to produce predicted values with the argument \texttt{xlevels} (see Figure \ref{fig:selected-model4-plot-effects}).
+<<selected-model4-plot-effects, fig.cap='Modified xlevels', fig.width=6, fig.height=4>>=
+#Make model4 effects 2
+model4.effects.2<-effect('age:income', 
+                         model4,xlevels=list(income=c(25,50,75,100)))
+#Make second plot
+plot(model4.effects.2)
+@
+
+It is worth pointing out. The \texttt{effects} package does not produce plots with ggplot.  If you want to, you can take the predicted values that have been produced with the command \texttt{effect()} and produce the same plots manually.  
+
+\begin{assignment}
+Replicate the effects plot for the age:income interaction in ggplot2. The first step is to turn \texttt{model4.effects.2} into a data.frame.\label{assignment29}
+
+\end{assignment}
+
+
+The same process can be used to produce predicted values for a logistic regression. 
+
+<<obtain-model-9-effects>>=
+#PLot effects of age on voting
+model9.effects<-Effect('age', model9)
+#
+@
+These are on the response scale and so they are \emph{probabilities}.  
+
+They can be plotted on the probability scale or transformed to the logit scale. 
+<<plot-model9-effects>>=
+#Response
+plot(model9.effects, type='response')
+#Logit
+plot(model9.effects, type='link')
+
+@
+
+We can also plot them in gggplot2. First we make the effects into a data frame. 
+<<make-model9-effects>>=
+#Make data frame
+model9.effects<-data.frame(model9.effects)
+
+@
+
+<<ggplot-model-9-effects>>=
+ggplot(model9.effects, aes(x=age, y=fit))+
+  geom_smooth(se=T)+
+  geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.1)
+model9.effects
+@
+
+\clearpage
+\section{Solutions}
+% \begin{enumerate}
+% 
+% \item 
+
+\noindent Assignment \ref{assignment1}
+<<solution1, echo=T, eval='markup', eval=F>>=
+install.packages('janeaustenr')
+@
+% 
+% \item 
+% \noindent Assignment \ref{assignment2}
+% <<solution2, eval=F>>=
+% library(car)
+% library(haven)
+% @
+\noindent Assignment \ref{assignment3}
+<<solution3, echo=T, results='markup'>>=
+#NOte, these are fake,obviously, could replace with numers from the class
+ages<-c(32,27,45)
+gender<-c(0,1,1)
+lucky<-c(7,5,4)
+@
+\noindent Assignment \ref{assignment4}
+
+<<solution4, echo=T, results='markup'>>=
+matrix1<-matrix(c(ages, gender, lucky), ncol=3)
+matrix2<-matrix(c(ages, gender, lucky), ncol=3, byrow=T)
+#inspect
+matrix1
+#inspect
+matrix2
+@
+\noindent Assignment \ref{assignment5}
+<<solution5>>=
+#get your own age. you have to remember where your age was stored in the vector age
+ages[3]
+
+#get your own gender. remember its position
+ages[5]
+@
+\noindent Assignment \ref{assignment6}
+<<solution6>>=
+matrix1[1,]
+matrix1[,2]
+matrix2[,1]
+@
+\noindent Assignment \ref{assignment7}
+<<solution7>>=
+matrix1[,1:3]
+#matrix1[,c(1,3,4)]
+@
+\noindent Assignment \ref{assignment8}
+<<solution8>>=
+df$gender2<-factor(df$gender2, levels=c('male', 'female'))
+df$gender2
+@
+\noindent Assignment \ref{assignment9}
+<<solution9>>=
+class(list1)
+class(list1[[1]])
+class(list1[[2]])
+class(list1[[3]])
+@
+\noindent Assignment \ref{assignment10}
+<<solution10>>=
+#write this function
+f<-function(x,y){
+  z<-x*y
+  print(z)
+}
+#Test it
+f(2,3)
+@
+\noindent Assignment \ref{assignment11}
+<<solution11,eval=F>>=
+#summarize each variable
+apply(ces,2,summary)
+#Get and storevariable labels
+variable_labels<-lapply(ces, function(x)attr(x, 'label'))
+#Get and store value labels
+value_labels<-lapply(ces, function(x) attr(x, 'labels'))
+@
+\noindent Assignment \ref{assignment13}
+<<solution13, eval=F>>=
+grep('news', variable_labels, value=T, ignore.case=T)
+grep('age', variable_labels, value=T, ignore.case=T)
+grep('year', variable_labels, value=T, ignore.case=T)
+grep('education', variable_labels, value=T, ignore.case=T)
+grep('vote', variable_labels, value=T, ignore.case=T)
+grep('income', variable_labels, value=T, ignore.case=T)
+grep('gender', variable_labels, value=T, ignore.case=T)
+variables<-c('PES15_74', 'PES15_75', 'PES15_76', 'PES15_77', 
+             'PES15_78', 'CPS15_78', 'CPS15_79', 'PES15_3', 'CPS15_92', 
+             'RGENDER')
+
+@
+\noindent Assignment \ref{assignment14}
+<<solution14, eval=F>>=
+cps<-select(ces, contains('CPS'))
+
+@
+\noindent Assignment \ref{assignment15}
+<<solution15,  eval=F>>=
+#Convert missing avlues
+out$yob<-recode(out$CPS15_78, "9998:9999=NA")
+#subtract birth year from 2015
+out$age<-2015-out$yob
+#Check class
+class(out$age)
+#convert to numeric
+out$age<-as.numeric(out$age)
+@
+\noindent Assignment \ref{assignment16}
+<<solution16, eval=F>>=
+#base R
+out[,11:23]
+
+#hadleyverse1
+select(out, 11:23)
+#Hadleyverse2
+select(out, tv, newspapers, internet, exchange, tv, radio, age, education, education2, income)
+#yet another way, note the - notation means the opposite of what follows.
+out<-select(out, -one_of(variables))
+@
+\noindent Assignment \ref{assignment17}
+<<solution17, eval=F>>=
+
+#Calculate the mean media consumption for each person. 
+#Remember 1, applies the function to each row.
+apply(news, 1,mean)
+#Save it to out with the name out$media
+out$media<-apply(news, 1, mean)
+#summary
+summary(out$media) #note the max is 7, which is correct
+@
+\noindent Assignment \ref{assignment18}
+<<solution18, eval=F>>=
+#education vote table
+education_vote_table<-table(out$education2, out$vote)
+#row percentages
+education_vote_table<-prop.table(education_vote_table,1)
+#write
+write.csv(education_vote_table, 
+          file='~/Desktop/education_vote.csv')
+@
+\noindent Assignment \ref{assignment19}
+<<solution19,eval=F>>=
+#correlation matrix
+cor.out<-select(out, tv, newspapers, radio, internet, 
+                exchange, age, education, income)
+#produce correlation matrix
+cor(cor.out, use='complete')
+@
+\noindent Assignment \ref{assignment20}
+<<solution20, eval=F>>=
+model2<-lm(media~education+age, data=out)
+model3<-lm(media~education+age+income, data=out)
+@
+\noindent Assignment \ref{assignment21}
+<<solution21,echo=T, eval=F>>=
+stargazer(model1, model2 ,model3,
+          type='html', 
+          out='~/Desktop/models.html')
+@
+
+\noindent Assignment \ref{assignment22}
+<<solution22-hidden,eval=F, echo=T>>=
+#model8
+model8<-glm(vote~education+age, family='binomial', data=out)
+#model9
+model9<-glm(vote~education+age+income, family='binomial', data=out)
+#stargazer
+stargazer(model7, model8, model9)
+@
+\noindent Assignment \ref{assignment23}
+<<solution23-hidden, eval=F>>=
+#Refactor education2
+out$education2<-factor(out$education2, 
+                       levels=c('HS or less', 'College or less', 'University'))
+#subset out income
+out2<-filter(out, income<200)
+#subset out  missing values
+out2<-filter(out2, is.na(education2)==FALSE)
+#draw plot
+ggplot(out2, aes(x=income, y=newspapers, group=gender))+
+  geom_point(aes(col=gender))+geom_jitter(aes(col=gender))+
+  geom_smooth(method='loess', aes(col=gender))+
+  labs(
+    title='Income and\nNewspaper Readership', y='Newspapers' ,x='Income')+
+  facet_grid(~education2)
+
+@
+\noindent Assignment \ref{assignment24}
+<<solution24,eval=F>>=
+ggplot(out, aes(x=education2, group=vote, fill=vote))+
+  geom_bar(position='dodge')
+@
+\noindent Assignment \ref{assignment25}
+<<solution25, eval=F>>=
+ggplot(out2, aes(x=Value))+geom_histogram(binwidth=1)+
+  facet_grid(~Variable)
+
+@
+\noindent Assignment \ref{assignment26}
+<<solution26,eval=F>>=
+#basic plot
+ggplot(na.omit(out2), aes(x=Value))+geom_histogram(binwidth=1)+
+  facet_grid(education2~Variable+gender)
+#recode age
+
+out2$age2<-recode(out$age, "18:35='18 to 35' ; 36:50='36 to 50' ; 50:99='50+'", 
+                  levels=c('18 to 35', '36 to 50', '50+'))
+#recode income
+out2$income2<-recode(out$income, "0:50='0 to 50' ; 51:100='51 to 100' ; 101:200 = '101 to 200' ; else=NA", levels=c('0 to 50', '51 to 100', '101 to 200'))
+#basic plot
+ggplot(na.omit(out2), aes(x=Value))+geom_histogram(binwidth=1)+
+  facet_grid(education2~Variable+gender)
+#More complex plot
+ggplot(na.omit(out2), aes(x=Value))+geom_histogram(binwidth=1)+
+  facet_grid(education2~Variable+age2)
+@
+\noindent Assignment \ref{assignment27}
+<<solution27, eval=F>>=
+ggplot(out3, aes(x=gender, y=avg))+geom_point()+
+  facet_grid(~education2)+
+  geom_errorbar(aes(ymin=avg-(1.96*se), ymax=avg+(1.96*se)), 
+                width=0.2)
+
+
+@
+\noindent Assignment \ref{assignment28}
+<<solution28, eval=F>>=
+model5.predicted.values<-data.frame(gender=c('Male', 'Female'), 
+                                    income=mean(out$income, na.rm=T) ,
+                                    age=mean(out$age, na.rm=T), 
+                                    education=mean(out$education, na.rm=T))
+model5.predicted.values<-predict(model5, 
+                                 model5.predicted.values,se.fit=T)
+model5.predicted.values<-data.frame(model5.predicted.values)
+#draw plot
+ggplot(model5.predicted.values, aes(x=c('Male', 'Female'), y=fit))+
+  geom_point()+ylim(c(0,7))+
+  geom_errorbar(aes(ymin=fit-(1.96*se.fit), ymax=fit+(1.96*se.fit), 
+                    width=0.02))
+@
+\noindent Assignment \ref{assignment29}
+<<solution29, eval=FALSE>>=
+#data frame
+model4.effects.3<-data.frame(model4.effects.2)
+
+ggplot(model4.effects.3, aes(x=age, y=fit))+
+  geom_point()+facet_wrap(~income)+
+  geom_errorbar(aes(ymin=fit-(1.96*se), ymax=fit+(1.96*se)),
+                width=1)+theme_bw()
+@
+
+% \end{enumerate}
+\end{document}

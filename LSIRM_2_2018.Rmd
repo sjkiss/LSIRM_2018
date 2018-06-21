@@ -1,0 +1,624 @@
+---
+title: "LSIRM 2018 - Introduction to R"
+author: "Simon Kiss"
+date: '2018-06-19'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Reading in our Data set
+```{r, read-in, results='hide'}
+
+#Read the file in
+load(url('http://sjkiss.github.io/files/CES2015_Combined_R.RData'))
+
+
+ces15<-CES2015_Combined
+
+str(ces15)
+vars<-attr(ces15, 'var.labels')
+vars
+look('news', vars)
+look('income', vars)
+look('rich', vars)
+library(questionr)
+install.packages('questionr')
+```
+
+
+```{r, examine-data}
+#Different ways of summarizing the data set
+#Check the first few rows
+head(ces)
+#The last few rows
+tail(ces)
+#Check the structure of the object
+str(ces)
+#Summarize the data set
+summary(ces)
+#See the variables names
+names(ces)
+
+
+```
+
+### Labelled class
+As referred to above, the haven package has a labelled class which is meant to be an intermediate class to mirror the way that software like SPSS and Stata store variable meta data.  It is not meant to be used in R.  
+
+There are two ways to deal with the labelled class.  You can use the function `as_factor()` to turn a variable from a labelled variable into a standard categorical variable.  Watch what happens below. The function `table()` to produce a frequency table of the variable `gender`. 
+
+```{r table-gender}
+table(ces$gender)
+```
+
+Now wrap `ces$gender` in `as_factor()`. 
+
+```{r convert-to-factor}
+table(as_factor(ces$gender))
+```
+
+The labelled class is _not_ meant to be used throughout an R analysis.  It is an *intermediate* class, meant to be converted to one of the other R classes quickly.  
+All we do is write over the original variables with the results of `as_factor()`.
+```{r, save-as-factor}
+ces$gender<-as_factor(ces$gender)
+ces$education<-as_factor(ces$education)
+ces$vote<-as_factor(ces$vote)
+ces$vote2<-as_factor(ces$vote2)
+```
+Now look what has happened to the factor variables.
+
+```{r, str-ces}
+str(ces)
+```
+
+A slightly quicker way, albeit with some downfalls is that `as_factor` actually can be used for an entire data frame. The trick is you have to be sure that all your labelled variables are actually factors. Some might actually be numeric. Here, we know that all the labelled variables are in fact, factors. Note: When dealing with a data set like the CES, this will not be the case!
+
+```{r as-factor-data-frame}
+ces<-as_factor(ces)
+
+```
+
+
+
+Note: these exercises really only apply to reading data in from SPSS or Stata format.  If you have more raw data, as in a csv file, or perhaps your own entered data from your own experiments, these steps will not be necessary. AS such, these steps may be particular to people working with large, cross-sectional data in fields like political science, sociology, economics and public health, rather than in experimental fields like psychology, medicine or other natural sciences.
+
+
+### Subsetting Rows and Columns (cases or Variables)
+Often we want to subset particular rows or select particular variables.  Again, there are two ways to do this. 
+Suppose we want to split the new out data frame into men and women.  We can refresh our memories of what variables we are looking at by using `lapply()` and the `attr()` command.
+
+The relevant command is `filter()`.  
+
+Suppose we want to split the data frame into two data frames by men and women. 
+
+```{r, filter-men}
+men<-filter(ces, gender=='Male')
+women<-filter(ces, gender=='Female')
+
+```
+
+The filter() command is one of the innovations from the tidyverse.  Using this example, we could go further illustrating some important innovations in the tidyverse to which we will return later.  The first innovation is the pipe operator ` %>% ` that is used to chain commands together. It goes on the right-hand-side of a command and feeds the results of the function on the left-hand-side to the right.  Watch:
+
+```{r, filter-men-tidy}
+#Take the data frame we want to filter
+men<-ces %>%  #use the pipe to send the results to the next command
+  filter(., gender=='Male') #The . is a placeholder; it just mens use the data that has come from the pipe. 
+
+```
+Now we can chwck what the results are. 
+```{r, str-men}
+#see the male data set
+str(men)
+```
+
+
+Sometimes, though we don't want to pick out certain observations, we only want certain variables.  Here, the relevant command is `select()`. Let's select all the media consumption variables.  We can actually do something interesting with them.
+
+There are multiple ways to do this. 
+
+```{r, subset-media,results='hide'}
+#Remind ourselves of the names of variables
+names(ces)
+#select by listing variable names
+media<-ces %>% 
+  select(., radio, internet, TV, newspapers)
+#select by using hte position number.  We want variables 2:5
+media<-ces %>% 
+  select(., 2:5)
+#Combine the colon and the names
+media<-ces %>% 
+  select(., radio:newspapers)
+#check
+str(media)
+```
+
+### The Apply Family in R
+Inevitably on R help boards, someone poses the question, ``how do I construct a `for()` loop in R''.  The answer is always a reference to the `apply()` family of commands.  There are three core functions and two lesser used ones. The three core functions are. 
+
+
+1. `apply()` applies a function to each row or column of a matrix or data frame
+2. `lapply()` lapply applies a function to each *element* of a vector, data frame or matrix and returns a list the result of which is the result of applying function 
+3. `sapply()` is a wrapper for lapply that returns either a vector, or a matrix. Does not return a list.
+
+Here, we can use the `apply()` command to calculate the average overall media consumption of each person. 
+
+
+```{r, apply-media-average, results='hide'}
+#apply, 1, applies function to each row, 2 applies function to each column
+#apply(data_frame, 1, function_name)
+#when there are no arguments to the function
+#apply(data_frame_name, 1, function_name)
+## 
+##when there is an argument you need to supply to a function,
+##you can use any letter to serve as a variable
+#apply(data_frame, 1, function(x) function_name(x))
+
+apply(media, 1, function(x) mean(x))
+
+#Now we just need to figure out how to save it.  
+```
+
+
+
+####Assignment 4 
+__Reattach the results from `apply(media, 1, function(x) mean(x)) to the data frame `ces`__
+
+```{r, attach-media-silently, echo=F, results='hide'}
+ces$average<-apply(media, 1, mean)
+```
+
+Now we can check what `ces` looks like:
+```{r, check-ces}
+str(ces)
+```
+
+
+#Plotting
+This is where the fun begins.  
+
+Base R's graphics are built around the `plot()` command.  The tidyverse's `ggplot2` plotting function is much more systematic and built on fairly consistent principles.  
+
+The `ggplot()` command is the basic command which contains the basic parameters of a graph and then specifics are added to it.  Below, we specify the underlying data -- `out` -- and the two most important aesthetics of a graph, the x and the y variable.  Note: in ggplot2 ``aesthetics'' has a very particular meaning. Namely, it maps particular visual features of a plot (i.e. color, shape of points, type of line, the fill of bars) to the values of variables (see the figure below).
+
+```{r, make-plot, fig.cap='No plot!'}
+ces %>% 
+ggplot(., aes(x=income))
+
+```
+
+But nothing appears.  This is because the second core aspect of the plot is the `geom</tt.  These are the graphical types of representing the relationship between x and y (see the next figure).
+
+```{r histogram,fig.cap='Histogram', fig.align='center'}
+#Add histogram
+ces %>% 
+  ggplot(., aes(x=income))+
+  geom_histogram()
+
+```
+
+Making bivariate plots is just a matter of adding in a y-variable for the y-axis.  
+
+```{r, make-bivariate-plot, fig.cap='Scatterplot'}
+
+ces %>% 
+  ggplot(., aes(x=income, y=average))+
+  geom_point()
+
+```
+
+Very quickly, we can also add in grouping variables.  Like education and / or gender. We can do this multiple ways. 
+
+aFirst, we could color the points by level of education.  The key is to provide map the color aesthetic of the points to the variable ``education''. 
+
+```{r, education-color, fig.cap='Points are colored by level of education.'}
+ces %>% 
+  ggplot(., aes(x=income, y=average))+
+  geom_point(aes(col=education))
+
+```
+Note that we have some missing values (NA) in level of education. This is somewhat annoying.  We can remove this quite quickly in the plot by adding in a `filter()` command in the chain of plotting commands.  The is.na() function takes a single variable. For each case, it returns TRUE if is missing and FALSE if is not missins.  So, we want to filter the dataset to include all the cases that are not missing data for education. 
+
+```{r, education-color-2, fig.cap='Missing values are removed'}
+ces %>% 
+  filter(is.na(education)==F) %>% 
+  ggplot(., aes(x=income, y=average, group=education))+
+  geom_point(aes(col=education))
+```
+
+Notice, though, when you run the following command, nothing is printed. 
+
+```{r save-plot-1, fig.cap='Missing values are removed', include=T}
+plot1<-ces %>% 
+  filter(is.na(education)==F) %>% 
+  ggplot(., aes(x=income, y=average, group=education))+
+  geom_point(aes(col=education))
+
+```
+
+But when you call `plot1`, it is printed.
+
+```{r, plot-1, include=T}
+plot1
+
+```
+
+The amazing thing about R in general and what has been a major driver in it s success is that _every single part_ of the plot is modifiable. Try doing that in Excel or SPSS.  For example, we can change the axis labels and main title with the command `labs`().
+
+```{r plot-1-labels}
+plot1+labs(x='Average Household Income', y='Average Days Of News Consumption', title='Average Media Consumption By Income')
+```
+
+
+We can also add in another grouping variable, say `gender`.  But rather than changing the colors or the shapes, we could make two different sub-graphs. One for men, one for women.  These are known as `facets`. You can use the command `facet_wrap` or `facet_grid`. Inside both, you use what is known as a ~ formula notation in R. We will come back to this when we deal with linear models.  For now just know that the row variable goes on the right and the column variable goes on the left of the tilde.  If you only have a variable to split into one or the other, just put it on the right side. 
+
+```{r, education-color-facet, fig.cap='Facet by gender'}
+ces %>% 
+  filter(is.na(education)==F) %>% 
+  ggplot(., aes(x=income, y=average, group=education))+
+  geom_point(aes(col=education))+
+  facet_wrap(~gender)
+```
+
+You can also add a line-of-best fit, directly to the plots using 
+`geom_smooth()`. Geom_smooth() can fit linear lines of best fit from a simple regression of y on x. Or it can fit locally-weighted (lowess) lines of best fit. 
+
+```{r, income-media-smooth, fig.cap='Smooth'}
+ces %>% 
+  filter(is.na(education)==F) %>% 
+  ggplot(., aes(x=income, y=average))+
+  geom_point(aes(col=education))+
+  facet_wrap(~gender)+
+  geom_smooth(method='lm', aes(col=education))
+```
+
+Notice, though that it only produces smooths for the _whole_ male and female data sets. It doesn't produce separate smooths broken down by education.  Looking above, try to figure out how to do that.
+
+#### Assignment 5
+Produce a plot that shows income on the x-axis, average media consumption on the y-axis, grouped by color for education, facetted by gender and with linear smooths (lines of best fit) for each level of education. 
+
+The other thing that is apparent is that there are a few data points at the high end of the income scale that are distorting the relationship a little bit.  Recreat the plot above but by filtering the data set so that it only includes normal people (let's say people earning less than $150,000)
+
+#### Assignment 6
+Produce the same plot, but filter out those who earn more than $150,000. 
+```{r, assignment-6-solution-hidden, fig.cap='Smooth', include=F}
+ces %>% 
+  filter(is.na(education)==F) %>% 
+  filter(income< 150) %>% 
+  ggplot(., aes(x=income, y=average))+
+  geom_point(aes(col=education))+
+  facet_wrap(~gender)+
+  geom_smooth(method='lm', aes(col=education))
+```
+## Plotting Categorical Data
+PLotting categorical data is done usually with bar charts of various types. Because the y-axis is usually a count (sometimes it is a percentage), a y-axis is not usually specified. 
+```{r, simple-bar, fig.cap='Vote Choice in 2015'}
+ces %>% 
+ggplot(., aes(x=vote2))+
+  geom_bar()
+
+```
+
+Notice we probably want to filter out the NAs. Those are probably people who did not vote. 
+
+```{r}
+ces %>% 
+  filter(., is.na(vote2)==F) %>% 
+ggplot(., aes(x=vote2))+
+  geom_bar()
+```
+
+To add in a grouping variable, we can facet:
+
+```{r, simple-bar-by-gender, fig.cap='Vote Choice by Gender'}
+ces %>% 
+  filter(., is.na(vote2)==F) %>% 
+ggplot(., aes(x=vote2))+
+  geom_bar()+
+  facet_wrap(~gender)
+
+```
+
+Or we can add a fill with color. The argument, `position='dodge'` puts the bars side by side. 
+
+```{r simple-bar-fill-by-gender, fig.cap='Vote Choice With Color Fill By Gender'}
+ces %>% 
+  filter(is.na(vote2)==F) %>% 
+ggplot(., aes(x=vote2))+
+  geom_bar(aes(fill=gender), position='dodge')
+```
+## Tidy data
+`ggplot()` really starts to sing, however, when we combine it with some of the newest innovations in R, namely the`dplyr` and the `tidyr`package.  To introduce these, it is crucial to understand the difference between long and wide data.  
+
+In long (tidy) data, each column is one variable and each row is one observation.   Currently our data is a mix of long and wide data.  
+```{r, show-long-data}
+head(ces)
+```
+
+In particular, the `tv, newspapers, radio, internet,  variables are actually all different observations on the same underlying variable, which is media consumption.  In tidyr, the `gather()` function takes columns that you would like to collapse into long format.  The syntax is gather(data_frame, name_of_new_variable, name_of_value_variable, variables_to_be_gathered).
+
+```{r, gather-ces}
+#Refresh our memory of what we are working with
+names(ces)
+#Gather the Media consumption Variables and values into a Media variable and a Days Variable
+ces.out<-ces %>% 
+  gather(., Media, Days, c(2:5,11))
+
+```
+#### Assignment 7
+Now, produce a scatterplot of with income on the x-axis , media consumption on the y axis facetted by different types of media variables.  For fun, see if you can add in a smooth for each facet. 
+```{r, assignment-7-solution-hidden,include=F, echo=F, results='hide'}
+ces.out %>% 
+ggplot(., aes(x=income,  y=Days))+
+  geom_point()+
+  facet_wrap(~Media)+
+  geom_smooth(method='loess')
+
+```
+
+#Formal Statistical Tests in R
+Beyond data visualization, R is fully equipped to conduct basically all formal statistical tests.  
+
+## Two continuous variables
+Are newspaper consumption and age correlated?
+```{r, newspaper-age}
+#Pearson's correlation
+cor(ces$newspapers, ces$age, use='complete.obs', method=c('pearson'))
+
+```
+The function `cor.test()` can also produce significanc tests for correlations. 
+```{r, newspaper-age-correlation-test}
+cor.test(ces$newspapers, ces$age, use='complete.obs', method=c('pearson'))
+```
+
+## Two categorical variables
+Is there a difference between level of education and proclivity to vote?  Key to testing hypotheses about hte relationships between two categorical variables is producing a table of counts with the `table()` function. 
+
+```{r table-vote-gender}
+#produce table
+tab_vote_gender<-table(ces$vote, ces$gender)
+#print
+tab_vote_gender
+```
+
+Note that we have a small problem with the variable `vote`.  Let's just get rid of those levels that have no cases.
+```{r, ces-vote-levels}
+#print levels of ces$vote
+levels(ces$vote)
+```
+Now, drop the levels and save the results back in `ces$vote`. We are just overwriting it. 
+
+```{r, droplevels-vote}
+ces$vote<-droplevels(ces$vote)
+```
+Now, rewrite the table.
+```{r, table-vote-gender-2}
+tab_vote_gender<-table(ces$vote, ces$gender)
+```
+```{r, print-table-vote-gender-2}
+tab_vote_gender
+```
+
+
+The basic function is `chisq.test()`
+```{r, table-vote-gender-test}
+chisq.test(tab_vote_gender)
+```
+
+## One categorical variable and a Continuous Variable
+This is the classic experimental type of data result. There are many ways to come at this.  First, let's see if we can just calculate the group means on our own. Let's see if we can get the group means of media consumption by level of education. This is such a common thing to do in data analysis, that this is one of the tidyverse's innovations, we use the command `group_by()`. 
+
+Notice how it lists gender as a group.  
+
+```{r, ces-group-gender,results='markup'}
+#Start with the data
+ces %>% 
+#Now we want to make groups to calculate group means.
+  group_by(gender) 
+```
+
+What we want to do now is to calculate the group average for each group that we have defined.  
+
+The key function here is `summarize()`.  It kind of makes sense, we are summarizing each gropu with a mean. Summarize creates a new data frame. One variable will be the groups made by our grouping command and the second variable will store the results of the calculation we tell it to conduct. 
+
+```{r, ces-group-gender-mean, results='markup'}
+ces %>% #Use the magrittr symbol to connect ces to the following line
+#Now we want to make groups to calculate group means.
+  group_by(gender) %>% 
+  summarize(avg=mean(newspapers, na.rm=TRUE))
+
+```
+
+Now, we can go further and actually plot sent those results to actually plot the group means! 
+
+```{r, ces-group-gender-mean-plot, results='markup'}
+ces %>% #Use the magrittr symbol to connect ces to the following line
+#Now we want to make groups to calculate group means.
+  group_by(gender) %>% 
+  summarize(avg=mean(newspapers, na.rm=TRUE)) %>% 
+  ggplot(., aes(x=gender, y=avg))+geom_point()+labs(title='Average Newspaper Consumption by gender')
+
+```
+
+We can also even add in the confidence intervals for the group means. The summarize command can use most mathematical and statistical commands to summarize groups.  We use the `n()` function to count the number of cases per geoup, the `sd()` function to return the standard deviation and the formula `n/sqrt(sd)` to calculate the standard error. Note that the summarize function is able to use column variables (i.e. n) immediately in subsequent functions. 
+
+```{r, calculate-error-bars, results='markup'}
+out<-ces %>% 
+  group_by(gender) %>% 
+  summarize(avg=mean(newspapers, na.rm=TRUE), n=n(), sd=sd(newspapers, na.rm=T), se=sd/sqrt(n))
+```
+
+Now we can print the plot using the geom `geom_errorbar()`
+
+```{r, print-error-bars, include=T}
+out %>% 
+  ggplot(., aes(x=gender, y=avg))+geom_point()+labs(title='Average Newspaper Consumption by gender')+geom_errorbar(    aes(ymin=avg-(1.96*se), ymax=avg+(1.96*se))    )
+
+```
+
+We can actually conduct the formal t.test as follows:
+
+```{r, t-test, results='markup'}
+t.test(newspapers~gender, data=ces)
+```
+
+# Order of Least Squares Regression
+This is obviously the workhorse analysis in the social sciences. It is performed with the function `lm()`.
+
+We can start by modelling the relationship between age and media consumption.  
+
+```{r, model-age-average}
+#we can give it any name we want
+model1<-lm(average~age, data=ces)
+#summary produces useful results
+summary(model1)
+```
+You can add it further covariates.
+
+```{r, model-age-average-2}
+model2<-lm(average~age+income, data=ces)
+summary(model2)
+```
+
+Including categorical variables:
+
+```{r, model-age-average-3}
+model3<-lm(average~age+income+education, data=ces)
+summary(model3)
+```
+
+
+We can also test for interactions.
+
+```{r, model-age-average-4}
+model4<-lm(average~age+income+education+age:income, data=ces)
+summary(model4)
+```
+
+
+## Linear Model Effects
+It is important to be able to visualize the effects of coefficients, particularly for interaction terms.  In R, this is really easy, especially without interaction terms.  The workhorse function is predict(). The key is to provide a data frame of new, sample data that is used to generate predicted values from a linear model. 
+
+So, first we can construct a data frame that includes the mean income, the mean age and the ou different levels of education. Note that the variables in the new data frame must be named __exactly__ as in the underlying model.  
+
+
+```{r, predict-effects}
+#create the new data frame
+newdat<-data.frame(income=mean(ces$income, na.rm=T), age=mean(ces$age, na.rm=T), education=levels(ces$education))
+#show
+newdat
+```
+
+
+Now, feed this to our model (model 3) with the predict function
+```{r, predict-effect-values}
+#generate predicted values
+preds<-predict(model3, newdat, se.fit=T, interval='confidence')
+
+#show
+
+
+```
+
+Now we want to combine these values with the levels of education. 
+
+```{r, make-predicted-data-frame}
+preds<-data.frame(preds, education=levels(ces$education))
+#show
+preds
+```
+Then we can plot.
+```{r, plot-predicted-values}
+preds %>% 
+  ggplot(., aes(x=education, y=preds$fit.fit))+geom_point()+
+  labs(x='Level of education', y='Predicted Days Of News Consumption')+
+  geom_errorbar(aes(ymin=fit.lwr, ymax=fit.upr))
+```
+One thing that is annoying is that when we made the factor ` education`, R automatically coded levels alphabetivally. But there is an order to them. So we can use the command `factor()` to just change the order o the levels with the levels argument. Note, however, that the levels that are specified must be **identical** to the levels of the underlying variable. Otherwise unmatched levels will turn into NA!
+
+```{r, relevel-education}
+levels(preds$education)
+preds$education<-factor(preds$education, levels=c('less than high school', 'completed high school', 'college, some university', 'university'))
+```
+
+```{r, refit-predicted-values}
+preds %>% 
+  ggplot(., aes(x=education, y=preds$fit.fit))+geom_point()+
+  labs(x='Level of education', y='Predicted Days Of News Consumption')+
+  geom_errorbar(aes(ymin=fit.lwr, ymax=fit.upr))
+```
+
+There is a quicker way to do this, which is to use the `ggeffects` library
+```{r, load-effects, eval=F}
+#install
+install.packages('ggeffects')
+```
+Load the library
+```{r, load-library}
+library(ggeffects)
+```
+
+The command `ggeffect()` requires you to specify the term for which you are interested in varying the effects. In its bare form it looks like this. 
+
+```{r, show-age}
+preds<-ggpredict(model3, terms='age')
+#show
+preds
+```
+The really nice thing about this package (and it's kind of brand new) is that the results are immediately formatted for plotting in `ggplot2`. Note `geom_ribbon()` creates a band that can represent a confidence interval that is more suitable for line plots than `geom_errorbar()`
+```{r, make-confidence-intervals}
+preds %>% 
+  ggplot(., aes(x=x,y=predicted))+geom_point()+geom_line()+
+    geom_ribbon(aes(ymin=conf.low, ymax=conf.high), alpha=0.25)
+```
+
+We can also provide up to two other grouping variables that will produce predicted values. We can specify exactly what values are plotted by using the [] notation.  Note, there has to be a space between the variable name and the square bracket.  
+```{r}
+#Generate Predicted Values
+preds<-ggpredict(model3, terms=c('age', 'income [25,50,75,100]', 'education'))
+#show
+preds
+```
+
+And then we can plot:
+```{r, make-predicted-values-plot}
+preds %>% 
+  ggplot(., aes(x=x, y=predicted))+
+  geom_point(aes(col=group))+
+  facet_wrap(~facet)
+```
+
+
+
+#### Assignment 4 Solution
+
+```{r, assignment-4-solution, eval=F}
+ces$average<-apply(media, 1, mean)
+```
+
+#### Assignment 5 Solution
+````{r, assignmtn-5-solution, eval=F}
+ggplot(filter(ces, is.na(education)==F),aes(x=income, y=average))+
+  geom_point(aes(col=education))+
+  facet_wrap(~gender)+
+  geom_smooth(method='lm', aes(col=education))
+````
+#### Assignment 6 Solution
+```{r, assignment-6-solution, fig.cap='Smooth'}
+ces %>% 
+  filter(is.na(education)==F) %>% 
+  filter(income< 150) %>% 
+  ggplot(., aes(x=income, y=average))+
+  geom_point(aes(col=education))+
+  facet_wrap(~gender)+
+  geom_smooth(method='lm', aes(col=education))
+```
+#### Assignment 7 Solution
+```{r, assignment-7-solution}
+ggplot(ces.out, aes(x=income,  y=Days))+
+  geom_point()+
+  facet_wrap(~Media)+
+  geom_smooth(method='loess')
+
+```
