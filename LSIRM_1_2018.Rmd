@@ -208,17 +208,17 @@ class(df$lucky)
 
 Factors are particular types of character vectors.  Factors are R\'s term for categorical variables.  Storing character vectors as factors allows the user to instruct R to treat it like a categorical variable. The key attribute that factor have is levels, which are like the value labels in SPSS.  There is a key difference between SPSS value labels and factor levels, however, which we will return to below.
 
-In our example of `genders` and `ages`, we want to convert the 1s in the gender variable to female and the 0s to males.  car's `recode()` command is the ticket.  It is one of the most versatile and frequently used packages in R. Get used to it, quickly!
+In our example of `genders` and `ages`, we want to convert the 1s in the gender variable to female and the 0s to males.  car's `Recode()` command is the ticket.  It is one of the most versatile and frequently used packages in R. Get used to it, quickly!
 
 ```{r load-car}
 library(car)
 ```
 
-```{r, recode-gender}
-recode(df$gender, "0='male' ; 1='female'", as.factor=T)
+```{r, Recode-gender}
+Recode(df$gender, "0='male' ; 1='female'", as.factor=T)
 ```
-```{r, recode-gender-2}
-df$gender2<-recode(df$gender, 
+```{r, Recode-gender-2}
+df$gender2<-Recode(df$gender, 
                    "0='male' ; 1='female'", 
                    as.factor=T)
 ```
@@ -266,7 +266,20 @@ x^2
 sqrt(9)
 ```
 # Functions 
+## Built-in Functions
 
+R brings with it a whole suite of built-in functions. 
+
+```{r}
+#Calculate mean
+mean(age)
+#Calculate median
+median(age)
+#get the maximum values
+max(age)
+```
+
+## Custom Functions
 Writing functions in R is quite simple and can make your life incredibly easy. 
 
 ```{r, function-examples, eval=F}
@@ -330,7 +343,4 @@ myfunction(7)
 
 #Print 7 but as a character.
 test(as.character(7))
-```
-```{r, test-sample-function}
-
 ```
