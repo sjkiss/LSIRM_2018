@@ -18,7 +18,7 @@ My recommendation is to use the `rio` library to read SPSS and Stata files in.
 
 
 ## Reading in our Data set
-```{r, read-in}
+```{r read-in}
 #ces<-rio::import('https://github.com/sjkiss/LSIRM_2018/blob/master/data/ces_data.sav?raw=true')
 library(haven)
 library(labelled)
@@ -487,11 +487,6 @@ ggplot(m7.preds, aes(x=x, y=predicted, col=group))+geom_point()+geom_line()+labs
 m7.preds2<-ggpredict(m7, terms=c('ideology [0,3, 5,7,10]', 'income', 'gender'))
 #plot
 ggplot(m7.preds2, aes(x=x, y=predicted, col=group))+facet_grid(~facet)+geom_point()+geom_line()+labs(x='Ideology', col='Income')
-
-```
-
-
-```{r, results='hide', echo=F}
 
 ```
 
