@@ -69,7 +69,7 @@ ces$education<-Recode(as.numeric(ces$education), "12:1000=NA")
 #check vals
 vals
 #Recode eduation to degree
-ces$degree<-car::Recode(ces$education, "1:7='No degree' ; 8:11='Degree'", levels=c('no degree', 'degree'), as.factor=T)
+ces$degree<-car::Recode(ces$education, "1:7='No degree' ; 8:11='Degree'", levels=c('No degree', 'Degree'), as.factor=T)
 
 #Income missing values
 vals$income
@@ -85,8 +85,7 @@ summary(ces)
 ## ----results='markup'----------------------------------------------------
 library(psych)
 desc<-describe(ces)
-describe(ces)
-ces$degree
+
 ## ----load-tidyverse------------------------------------------------------
 library(tidyverse)
 
