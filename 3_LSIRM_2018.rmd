@@ -29,6 +29,9 @@ In practice, what I usually do is end up having at least three separate working 
 ```{r read-in}
 source('https://raw.githubusercontent.com/sjkiss/LSIRM_2018/master/2_LSIRM_2018.r')
 names(ces)
+summary(ces)
+str(ces)
+ces$pers_fdpol
 ```
 
 

@@ -85,7 +85,8 @@ summary(ces)
 ## ----results='markup'----------------------------------------------------
 library(psych)
 desc<-describe(ces)
-
+describe(ces)
+ces$degree
 ## ----load-tidyverse------------------------------------------------------
 library(tidyverse)
 
