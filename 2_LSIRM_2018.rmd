@@ -2,7 +2,10 @@
 title: "LSIRM 2018 - Introduction to R"
 author: "Simon Kiss"
 date: '2018-06-19'
-output: html_document
+output: html_document: 
+    toc: true
+    toc_float: true
+    code_folding: hide
 
 ---
 
@@ -23,7 +26,6 @@ My recommendation is to use the `rio` library to read SPSS and Stata files in.
 library(haven)
 library(labelled)
 ces<-read_sav('data/ces15_data.sav')
-
 
 ```
 
@@ -82,10 +84,9 @@ vals<-val_labels(ces)
 vals
 ```
 
-It looks like for every variable, except for `income_num` and `p_selfplace`, we can Recode values 998 to 1000 to be missing. But in addition, some variables respondents also picked `don't know` or `Refuse`. Some might try to make use of those data, but we'll just dump them for the moment. 
+It looks like for every variable, except for `p_selfplace`, we can recode values 998 to 1000 to be missing. But in addition, some variables respondents also picked `don't know` or `refuse`. Some might try to make use of those data, but we'll just dump them for the moment. 
 
 The easiest function to recode variables is the `Recode` command in the `car` library. 
-So, for the income inquality variable, we could safely recode any number larger than 3 to be missing. Or we could specify each individual number. Both of the following commands are equivalent. 
 
 Please note: there is a conflict between two recode commands; namely, there exists a `recode` in the `car` library (specified as `car::recode`) and in the `dplyr` library (part of the `tidyverse`, `dplyr::recode`). If one package is loaded *after* the other, then the first package's command is masked.  The best way to avoid this is to use capital-R `Recode` from the `car` library.  That will *always* and *only* call the `car::recode` command.  
 
@@ -94,6 +95,7 @@ Please note: there is a conflict between two recode commands; namely, there exis
 Recode(x, "old value=new value")
 ```
 
+So, for the income inquality variable `p_incineq`, we could safely recode any number larger than 3 to be missing. Or we could specify each individual number. Both of the following commands are equivalent. 
 
 ```{r results='markup', echo=T}
 #load the car library
@@ -110,58 +112,57 @@ summary(test2)
 ```
 There are a few things to notice about the `Recode()` command. Overall, the recodes are put in **double-quotes** . Each individual recode is separated with a semi-colon. And normally, if you are recoding character strings, you use single-quotes. But, because NA is a reserved character string denoting missing data, it is unquoted. 
 
-Notice now that the maximum value is 2. We've set missing values to be `NA`. 
+Notice now that, after the recode, the maximum value is 2. We've set missing values to be `NA` and they are not counted when we use `summary()`
 
-We just dumped that recode result in a quick temporary variable called `test`. 
-
-What we really want is to save it in a new variable caled `inequal`. When you execute this command, watch what happens to the environment in the top right corner. 
+We also just dumped that recode result in a quick temporary variable called `test`.  What we really want is to save it in a new variable caled `inequal`. When you execute this command, watch what happens to the environment in the top right corner. 
 
 ```{r, results='hide', echo=T}
 ces$inequal<-Recode(as.numeric(ces$p_incineq), "3:1000=NA")
-str(ces)
+
 ```
+
+We can also recode numbers to factors.  In this case, it might make more sense to collapse the `sex_r` variable to `gender` as a categorical variable. 
+```{r sex-gender}
+#recode sex into gender
+ces$gender<-Recode(ces$sex_r, "1='M' ; 2='F'", levels=c('M', 'F'), as.factor=T)
+
+```
+There are a few things to note here. First, note that, inside the recodes, numbers are not quoted, but character strings are, with single-quotes. Second, there is an additional argument, `levels` that takes a character vector the order of which is important. The first level of the factor is the reference categor.  Lastly, there is the argument `as.factor` which is logical (i.e. either `TRUE` or `FALSE`). If TRUE, the new variable is stored a s a factor, if FALSE it is stored as just a character string. 
+
 
 
 #### Assignment 4
-> 1. Recode `each` of the other variables such that missing values are converted to NA. You will have to go back and forth to `vals` to remind yourself of what the missing values are. 
+> 1. Recode `income_full`, `p_selfplace` and `education` such that missing values are converted to NA. Save `income_full` as `income` and `p_selfplace` as `ideology`. You will have to go back and forth to `vals` to remind yourself of what the missing values are. Recode education into a new variable, `degree` which has the levels `no degree` and `degree`. Check `vals` to get the range of values right.  
 
 ```{r assignment-4-solution}
-#detach('package:dplyr')
-
-
+#education
+vals$education
+#education missing values
 ces$education<-Recode(as.numeric(ces$education), "12:1000=NA")
+#degree
+#check vals
+vals
+#Recode eduation to degree
+ces$degree<-car::Recode(ces$education, "1:7='No degree' ; 8:11='Degree'", levels=c('no degree', 'degree'), as.factor=T)
 
-vals
-ces$p_votechce<-Recode(as.numeric(ces$p_votechce), "8:1000=NA")
-vals
-ces$pers_ret<-Recode(as.numeric(ces$pers_ret), "4:1000=NA")
-vals
-ces$pers_fdpol<-Recode(as.numeric(ces$pers_fdpol), "4:1000=NA")
-ces$p_gap<-Recode(as.numeric(ces$p_gap), "6:1000=NA")
-ces$sex_r<-Recode(as.numeric(ces$sex_r), "3:1000=NA")
+#Income missing values
+vals$income
 ces$income<-Recode(as.numeric(ces$income_full), "6:1000=NA")
+#Recode p_selfplace
+ces$ideology<-Recode(as.numeric(ces$p_selfplace), "1000=NA")
 str(ces)
+
 ```
+
 
 Note: There are ways to automate this and we'll deal with those tomorrow. 
 
 ```{r summary-ces}
 summary(ces)
 ```
-
-There is one last wonky thing we need to deal with. `income_num` has a minimum value of `-99000` and `p-selfplace` has a maximum value of `1000`.  The reason they did not show up when we looked through `vals` is that they are not read in as categorical variables from the SPSS file; they were read in as numbers, without any value labels attached to them. 
+ 
 
 Often, when you do Recodes, it is also useful to change the names of the variables, to something more user friendly. This has the added advantage of also keeping the original variables intact, just incase you make a mistake.
-
-#### Assignment 5
-> 1. Recode the `p_selfplace` variable so that 1000 is NA; This time, store the variable as `ideology`.
-
-```{r assignment-solution-5}
-#Recode p_selfplace
-ces$ideology<-Recode(as.numeric(ces$p_selfplace), "1000=NA")
-str(ces)
-```
-
 
 
 # Describing results
@@ -257,21 +258,7 @@ plot3
 
 Very quickly, we can also add in third grouping variables.  Like education and / or gender.
 
-We can do gender as follows.  First, check the variables. 
-```{r check-variables}
-#Check sex
-ces$sex_r
-#Check the value labels of sex
-vals$sex_r
-```
-
-This will not work that well. Let's recode the variable to a factor. 
-
-```{r Recode-gender-factor}
-#recode sex into gender
-ces$gender<-car::Recode(ces$sex_r, "1='M' ; 2='F'", levels=c('M', 'F'), as.factor=T)
-```
-
+We can do gender as follows.  
 The key is to use the `aes()` argument in the `geom()` to map a specific visuable attribute of the plot to values of the grouping variable. 
 ```{r, plot-4,include=T}
 #Make plot 4, save as plot4
@@ -309,14 +296,9 @@ plot4b
 
 
 #### Assignment 9
-> 1. Recode `education` into a dichotomous variable, called `degree`. 
-> 2. Produce another scatterplot income and ideology but group the points by education using color to differentiate
+> 1.. Produce another scatterplot income and ideology but group the points by education using color to differentiate
 
 ```{r assignment-9-solution}
-#Check value labels
-vals
-#Recode eduation to degree
-ces$degree<-car::Recode(ces$education, "1:7='No degree' ; 8:11='Degree'", levels=c('No degree', 'Degree'))
 plot5<-ggplot(ces, aes(x=income, y=ideology))+geom_point(aes(col=degree))+geom_smooth(aes(col=degree), method='lm')
 plot5
 ```

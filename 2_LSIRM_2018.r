@@ -8,7 +8,6 @@ library(labelled)
 ces<-read_sav('data/ces15_data.sav')
 
 
-
 ## ---- examine-data-------------------------------------------------------
 #Different ways of summarizing the data set
 #Check the first few rows
@@ -54,32 +53,34 @@ summary(test2)
 
 ## ---- results='hide', echo=T---------------------------------------------
 ces$inequal<-Recode(as.numeric(ces$p_incineq), "3:1000=NA")
-str(ces)
+
+
+## ----sex-gender----------------------------------------------------------
+#recode sex into gender
+ces$gender<-Recode(ces$sex_r, "1='M' ; 2='F'", levels=c('M', 'F'), as.factor=T)
+
 
 ## ----assignment-4-solution-----------------------------------------------
-#detach('package:dplyr')
-
-
+#education
+vals$education
+#education missing values
 ces$education<-Recode(as.numeric(ces$education), "12:1000=NA")
+#degree
+#check vals
+vals
+#Recode eduation to degree
+ces$degree<-car::Recode(ces$education, "1:7='No degree' ; 8:11='Degree'", levels=c('no degree', 'degree'), as.factor=T)
 
-vals
-ces$p_votechce<-Recode(as.numeric(ces$p_votechce), "8:1000=NA")
-vals
-ces$pers_ret<-Recode(as.numeric(ces$pers_ret), "4:1000=NA")
-vals
-ces$pers_fdpol<-Recode(as.numeric(ces$pers_fdpol), "4:1000=NA")
-ces$p_gap<-Recode(as.numeric(ces$p_gap), "6:1000=NA")
-ces$sex_r<-Recode(as.numeric(ces$sex_r), "3:1000=NA")
+#Income missing values
+vals$income
 ces$income<-Recode(as.numeric(ces$income_full), "6:1000=NA")
-str(ces)
-
-## ----summary-ces---------------------------------------------------------
-summary(ces)
-
-## ----assignment-solution-5-----------------------------------------------
 #Recode p_selfplace
 ces$ideology<-Recode(as.numeric(ces$p_selfplace), "1000=NA")
 str(ces)
+
+
+## ----summary-ces---------------------------------------------------------
+summary(ces)
 
 ## ----results='markup'----------------------------------------------------
 library(psych)
@@ -130,16 +131,6 @@ plot2
 plot3<-ggplot(ces, aes(x=as.factor(education) ,y=ideology))+geom_boxplot()
 plot3
 
-## ----check-variables-----------------------------------------------------
-#Check sex
-ces$sex_r
-#Check the value labels of sex
-vals$sex_r
-
-## ----Recode-gender-factor------------------------------------------------
-#recode sex into gender
-ces$gender<-car::Recode(ces$sex_r, "1='M' ; 2='F'", levels=c('M', 'F'), as.factor=T)
-
 ## ---- plot-4,include=T---------------------------------------------------
 #Make plot 4, save as plot4
 plot4<-ggplot(ces, aes(x=income, y=ideology, group=gender))+geom_point(aes(col=gender))
@@ -161,10 +152,6 @@ plot4b<-plot4+geom_smooth(method='lm', aes(col=gender))
 plot4b
 
 ## ----assignment-9-solution-----------------------------------------------
-#Check value labels
-vals
-#Recode eduation to degree
-ces$degree<-car::Recode(ces$education, "1:7='No degree' ; 8:11='Degree'", levels=c('No degree', 'Degree'))
 plot5<-ggplot(ces, aes(x=income, y=ideology))+geom_point(aes(col=degree))+geom_smooth(aes(col=degree), method='lm')
 plot5
 

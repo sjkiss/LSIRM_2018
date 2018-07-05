@@ -2,21 +2,22 @@
 title: "Introduction To R - LSIRM 2018 3"
 author: "Simon Kiss"
 date: '2018-07-04'
-output: html_document
+output: 
+  html_document: 
+    toc: true
+    toc_float: true
+    code_folding: hide
+    
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, warning=F, message=F, include=F, results='hide')
+knitr::opts_chunk$set(echo = TRUE, warning=F, message=F, results='hide')
 
 ```
 # Data Management
 
 This is a good moment to introduce you to some basic data and code management principles that will hopefully make your life much easier.  The basic idea is to break up your code into manageable chunks and save each chunk in a separate script. 
 
-```{r hidden-purl-script, results='hide', echo=F}
-purl('LSIRM_2_2018.Rmd', '2_LSIRM_2018.R')
-
-```
 
 By using the command `source()` you can execute R scripts linearly.  What this means is that you can put some parts of your workflow in separate (i.e. more manageable chunks) and then source them in the next file. This has the added advantage of making analyses that you've done once before, executable for other projects when you need code you've written now. 
 
@@ -24,20 +25,106 @@ In practice, what I usually do is end up having at least three separate working 
 
 #### Assignment 1
 >1. Try sourcing in the file from yesterday.
+
 ```{r read-in}
+source('https://raw.githubusercontent.com/sjkiss/LSIRM_2018/master/2_LSIRM_2018.r')
+names(ces)
 ```
 
 
 ### Tidy data
 `ggplot()` really starts to sing, however, when we combine it with some of the newest innovations in R, namely the`dplyr` and the `tidyr`package.  To introduce these, it is crucial to understand the difference between long and wide data.  
 
-In long (tidy) data, each column is one variable and each row is one observation.   Currently our data is a mix of long and wide data.  
+In long (tidy) data, each column is one variable and each row is one observation.   Currently our data very tidy, however, the difference between the two is sometimes blurry and can change depending on your purposes. Sometimes we want to *reshape* data from wide to long format.  This can get to be a pretty technical - even philosophical - distinction, and we won't go into it.
 
-```{r, show-long-data}
-ces
+Here's a quote from Hadley Wickham that illustrates this: 
+
+> A dataset is a collection of values, usually either numbers (if quantitative) or strings (if qualitative). Values are organised in two ways. Every value belongs to a variable and an observation. A variable contains all values that measure the same underlying attribute (like height, temperature, duration) across units. An observation contains all values measured on the same unit (like a person, or a day, or a race) across attributes.
+
+That said, sometimes it can be blurry and you might want to reshape data depending on the purpose. For example, you might be satisfied with two variables `home phone` and `work phone` in one context. But in another (e.g. fraud detection) you might want two different variables `phone type` and `phone_number`. 
+#### Assignment 2
+>1. How many variables are there in this data set? What are they?
+
+```{r table1, results='markup'}
+
+#print table1
+table1
+
 ```
 
-### Gathering filter, selecting
+There are 4 variables. Superficially, the variables are named `country`, `year`, `cases` and `population`. However, a different way to conceptualize the data would be as follows. 
+
+```{r show-long-data, results='markup'}
+#Show table2
+table2
+```
+
+Here, the 4 variables are different: `country`, `year`, `type` (i.e. type of count or group of people) and `count`. 
+
+The reason that it is worth thinking about how you want your data to be shaped is that it can facilitate easy visualization and analysis.  
+
+The `tidyr` package makes it remarkably easy to reshape data from long to wide and vice verse.  The key function is the `gather()` function. It takes the data frame you want to reshape (e.g. gather) as the first argument, then it takes two arguments, the defaults are `Variable` and `value`. Lastly, you can specify specifically which columns you want to `gather()`
+
+To deal with the example above: 
+```{r show-table1, results='markup'}
+#Show table1
+table1
+#Show table2
+table2
+```
+
+We want to fold the two variables `cases` and `population` into two new variables. We dont' want to touch the variables `country` and `year`
+
+So it looks like this. 
+
+```{r gather-table-1, results='markup'}
+#Start with the data frame you want to work with, feed it to the next line
+table1 %>% 
+  #Gather the data frame, name new columns Variable, Value, do not touch country and year
+gather(Variable, Value, cases, population) 
+
+```
+
+Now let's turn to our data frame: 
+```{r, show-wide-data, results='markup'}
+#show first 6 rows of ces
+head(ces)
+vars
+```
+
+The variables `pers_ret` and `pers_fdpol` were both variables about a person's financial situation. The only difference was the first was about the person's financial situatino in general and the second was about whether the federal government had any impact on that. 
+
+We might want to visualize the distribution of both responses in one plot.  But because they are stored in two separate variables, this would be *very* hard to do in base-R.  This is a problem that the tidyverse was developed to solve.  
+
+#### Assignment 3
+> 1. Gather `pers_ret` and `pers_fdpol` into one variable called `Finances`. Store the new data frame as out.Check the names of `out` to be sure that it worked. Plot with a barplot the distribution of responses facetting now by the new variable Finances. 
+
+```{r assignment-3-solution}
+str(ces)
+#Examine variables
+ces$pers_ret
+ces$pers_fdpol
+#Store the results of the command in out. Note, this can be added at the end, once you know you have the command correct. 
+# Start with the data frame
+out<-ces %>% 
+  #Gather, name the new variables, then select the variables to be gathered
+gather(Finances, Value, pers_ret, pers_fdpol )
+
+#names
+names(out)
+
+#plot
+ggplot(out, aes(x=Value))+geom_bar()+facet_grid(~Finances)
+```
+
+One trick here is that 
+#### Assignment 4
+
+```{r}
+names(ces)
+```
+
+# filter, selecting
 The tidyverse is meant to accomplish a few things. One of these things is to improve the readability of R code. Base R can be quite messy. 
 
 One of the key innovations in the `tidyverse()` is the use of this character `%>%`. This is a pipe that sends the results of one command to the command on the next line. Technically, this character only works when the `magritr` library is loaded, but this is always loaded automatically when you run `library(tidyverse)` so you almost never have to worry about it.  
@@ -112,10 +199,10 @@ ces %>%
 
 In theory these chains can be infinite. In reality you usually. 
 
-### Long v. Wide Data
-Central to the tidyverse's select is the notion of tidy data.  
+# Mutating and Summarizing 
 
-#### Assignment 11
-> 1. Create a subset of the ces data 
-```{r}
-```
+# Group Means 
+
+# Generalized Linear Models
+
+
