@@ -28,10 +28,8 @@ In practice, what I usually do is end up having at least three separate working 
 
 ```{r read-in}
 source('https://raw.githubusercontent.com/sjkiss/LSIRM_2018/master/2_LSIRM_2018.r')
-names(ces)
-summary(ces)
-str(ces)
-ces$pers_fdpol
+
+
 ```
 
 
@@ -81,10 +79,9 @@ We want to fold the two variables `cases` and `population` into two new variable
 So it looks like this. 
 
 ```{r gather-table-1, results='markup'}
-#Start with the data frame you want to work with, feed it to the next line
-table1 %>% 
+
   #Gather the data frame, name new columns Variable, Value, do not touch country and year
-gather(Variable, Value, cases, population) 
+gather(table1, Variable, Value, cases, population) 
 
 ```
 
@@ -99,32 +96,53 @@ The variables `pers_ret` and `pers_fdpol` were both variables about a person's f
 
 We might want to visualize the distribution of both responses in one plot.  But because they are stored in two separate variables, this would be *very* hard to do in base-R.  This is a problem that the tidyverse was developed to solve.  
 
+One problem we face is that `pers_ret` and `pers_fdpol` are `labelled` variables.  Take a look. 
+
+```{r examine-personal-federal}
+#Show pers_ret
+ces$pers_ret
+#Show pers_fdpol
+ces$pers_fdpol
+```
+
+
+Part of the problem stems from the fat that the value labels are not in a meaningful order, i.e. `1=Better`, but `2=Worse`, but `3=Stayed the same`.That is not our problem, that's a problem of the original data set.  It would be more intuitive to have the levels go from one extreme to the other.  
+
+We coudl attack this from a number of ways. 
+
+We could recode the underlying number to a factor level. This relies on turning the `labelled` variable into a `number` with the function `as.numeric()`.  
+
+```{r sample-recode, results='markup'}
+ces$personal<-Recode(as.numeric(ces$pers_ret),"1='Better' ; 2='Worse' ; 3='Same'", levels=c('Worse', 'Same' ,'Better'), as.factor=T)
+#federal policies
+ces$federal<-Recode(as.numeric(ces$pers_fdpol),"1='Better' ; 2='Worse' ; 3='Same'", levels=c('Worse', 'Same' ,'Better'), as.factor=T)
+
+```
+
 #### Assignment 3
-> 1. Gather `pers_ret` and `pers_fdpol` into one variable called `Finances`. Store the new data frame as out.Check the names of `out` to be sure that it worked. Plot with a barplot the distribution of responses facetting now by the new variable Finances. 
+> 1. Gather `personal` and `federal` into one variable called `Finances`. Store the new data frame as out.Check the names of `out` to be sure that it worked. Plot with a barplot the distribution of responses facetting now by the new variable Finances. 
 
 ```{r assignment-3-solution}
 str(ces)
 #Examine variables
-ces$pers_ret
-ces$pers_fdpol
+ces$personal
+ces$federal
+```
+
+
+```{r plot-finances}
 #Store the results of the command in out. Note, this can be added at the end, once you know you have the command correct. 
 # Start with the data frame
-out<-ces %>% 
+
   #Gather, name the new variables, then select the variables to be gathered
-gather(Finances, Value, pers_ret, pers_fdpol )
+out<-gather(ces, Finances, Value, personal, federal )
 
 #names
 names(out)
+#
 
 #plot
 ggplot(out, aes(x=Value))+geom_bar()+facet_grid(~Finances)
-```
-
-One trick here is that 
-#### Assignment 4
-
-```{r}
-names(ces)
 ```
 
 # filter, selecting
@@ -157,16 +175,7 @@ filter(ces, gender=='M')
 select(ces, c(gender, ideology))
 ```
 
-Note, within the tidyverse, *all* functions take a data.frame as the first argument, and other arguments following. 
 
-Or, to *really* improve readability you can use the pipe to feed data frames to the next line.  The keyboard shortcut for inserting the pipe is `%>%` is `shift-CMD-M`  on macs. 
-
-
-```{r tidyverse-filter-men}
-#Filter CES to include only men
-ces %>% 
-  filter(gender=='M')
-```
 Then, add another command to select only ideology
 ```{r filter-men-select-ideology}
 ces %>% 
@@ -189,18 +198,109 @@ ces %>%
 ```
 
 
+
+#### Assignment 4
+> 1. In the last plot that we made, there were missing values that were reported. We could filter the dataset to exclude those values.  
+
+```{r assignment-4}
+#check out
+str(out)
+#Start with out as a data frame
+out %>% 
+  #filter out missing values on the value label
+  filter(is.na(Value)==F) %>% 
+  #plot
+  ggplot(., aes(Value))+geom_bar()+facet_grid(~Finances)
+
+```
+
+# Grouping and summarizing
+## Calculating group means
+
+One of the most common things that we do in the social sciences is to calculate group means. This is fundamental in experimental fields like psychology and common in fields that deal with survey research. 
+
+The `tidyverse` makes it extremely easy. 
+
+The central concepts that make it easy are `grouping` and `summarizing`.  Both have their own functions with those names: `group_by()` and `summarise()`.
+
+Grouping a data frame prepares it for analysis based on the values of the grouping variable. 
+
+Summarizing that data frame then performs some analysis on each group formed by the grouping variable. 
+
+Here, we want 
+
 ```{r calculate-group-means}
 #Take dataframe
 ces %>% 
-  #name the groups
+  #name the grouping variable
   group_by(gender) %>% 
-  #wE are going to summarize each group with a function
+  #Then summarize each group by calculating its mean
   summarize(
     mean(ideology, na.rm=T)
   )
 ```
 
-In theory these chains can be infinite. In reality you usually. 
+You can store the results of the summarizing function in a new variable name. 
+
+```{r calculate-group-means-avg}
+#Take dataframe
+ces %>% 
+  #name the grouping variable
+  group_by(gender) %>% 
+  #Then summarize each group by calculating its mean
+  summarize(
+    avg=mean(ideology, na.rm=T)
+  )
+```
+
+The other thing you can do is create multiple groups. Let's say we want to find the average ideology score by degree status and gender.
+
+```{r average-ideology-degree}
+
+ces %>% 
+  #name the grouping variable
+  group_by(gender, degree) %>% 
+  #Then summarize each group by calculating its mean
+  summarize(
+    avg=mean(ideology, na.rm=T)
+  )
+```
+
+Then we can plot them. 
+
+#### Assignment 5
+> 1. PLot the average ideology scores for gender and degree. Filter out missing values. 
+
+```{r assignment-5-solution}
+
+ces %>% 
+  #name the grouping variable
+  group_by(gender, degree) %>% 
+  #Then summarize each group by calculating its mean
+  summarize(
+    avg=mean(ideology, na.rm=T)
+  ) %>% 
+  filter(is.na(gender)==F& is.na(degree)==F) %>% 
+  ggplot(., aes(x=gender, y=avg, col=degree))+geom_point()
+
+```
+
+You can also create multiple variables. 
+
+```{r show-standard-errors}
+ces %>% 
+  #name the grouping variable
+  group_by(gender, degree) %>% 
+  na.omit() %>% 
+  #Then summarize each group by calculating its mean
+  summarize(
+    avg=mean(ideology),
+    sd=sd(ideology),
+  freq=n(), 
+  se=sd/sqrt(freq)
+  ) 
+```
+
 
 # Mutating and Summarizing 
 
