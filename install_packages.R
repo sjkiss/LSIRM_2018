@@ -10,10 +10,12 @@ if(length(new.packages)) install.packages(new.packages, repos='http://cran.utsta
 #Save installed package names
 out<-to.install[to.install %in% installed.packages()[,'Package']]
 
-#print out
-out
+
 
 #You should see 'Hello World' after this. 
 print('Hello World')
+
+#print out
+out
 #One last check
 plot(seq(1,10,1), seq(1,10,1), main='If you can read this, you are set up.')
