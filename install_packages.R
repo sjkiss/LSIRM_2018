@@ -18,4 +18,4 @@ print('Hello World')
 #print out
 out
 #One last check
-plot(seq(1,10,1), seq(1,10,1), main='If you can read this, you are set up.')
+plot(seq(1,10,1), seq(1,10,1), main='NO')
