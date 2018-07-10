@@ -19,7 +19,7 @@ knitr::opts_chunk$set(echo = TRUE, warning=F, message=F,  results='hide', fig.wi
 ## Reading Data In
 R has a number of functions meant to read data in from a variety of formats. The core functions are `read.table()` for plain text files, `read.csv()` for .csv files. More elaborate files (e.g. SPSS or Stata) require more advanced functions. The three main libraries that offer functions that read SPSS or Stata files are the foreign, haven, and rio libraries. Foreign is the oldest, haven and rio are newer.  
 
-My recommendation is to use the `rio` library to read SPSS and Stata files in. 
+My recommendation is to use the `haven` library to read SPSS and Stata files in. 
 
 
 ## Reading in our Data set
