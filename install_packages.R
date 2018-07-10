@@ -13,14 +13,12 @@ out<-to.install[to.install %in% installed.packages()[,'Package']]
 
 
 #You should see 'Hello World' after this. 
-#print('Hello World')
+print('Hello World')
 
-#print out
-cat(out)
 
+#print(out)
 print(out)
 
-out
 
 #One last check
 plot(seq(1,10,1), seq(1,10,1), main='If you can read this, you are set up.')
