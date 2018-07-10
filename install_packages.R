@@ -10,7 +10,7 @@ if(length(new.packages)) install.packages(new.packages, repos='http://cran.utsta
 #Save installed package names
 out<-to.install[to.install %in% installed.packages()[,'Package']]
 #print out
-out
+print(out)
 
 #You should see 'Hello World' after this. 
 print('Hello World')
