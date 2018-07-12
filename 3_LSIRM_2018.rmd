@@ -1,5 +1,5 @@
 ---
-title: "Introduction To R - LSIRM 2018 3"
+title: "LSIRM 2018 - Introduction to R - Tutorial 3"
 author: "Simon Kiss"
 date: '2018-07-04'
 output: 
@@ -11,7 +11,7 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, warning=F, message=F, results='hide')
+knitr::opts_chunk$set(echo = TRUE, warning=F, message=F, results='hide', fig.width=4, fig.height=3, fig.align='center')
 
 ```
 # Data Management
@@ -21,7 +21,7 @@ This is a good moment to introduce you to some basic data and code management pr
 
 By using the command `source()` you can execute R scripts linearly.  What this means is that you can put some parts of your workflow in separate (i.e. more manageable chunks) and then source them in the next file. This has the added advantage of making analyses that you've done once before, executable for other projects when you need code you've written now. 
 
-In practice, what I usually do is end up having at least three separate working scripts. The first reads the data in and conducts any recodes, the second that conducts some analyses, and the third that does some gussying up producing nice looking plots and tables. In the second file, I source the first file, and in the third file, I source the first and second .R files and play with the plots. If I discover I need to change something (say, I need to change a variable to a dichotomous variable), then I can go back and either change the initial recode or add another one. 
+In practice, what I usually do is end up having at least three separate working scripts. The first reads the data in and conducts any recodes, the second that conducts some analyses, and the third that does some gussying up producing nice looking plots and tables. In the second file, I source the first file, and in the third file, I source the first and second `.R` files and play with the plots. If I discover I need to change something (say, I need to change a variable to a dichotomous variable), then I can go back and either change the initial recode or add another one. 
 
 #### Assignment 1
 >1. Try sourcing in the file from yesterday.
@@ -33,16 +33,17 @@ source('https://raw.githubusercontent.com/sjkiss/LSIRM_2018/master/2_LSIRM_2018.
 ```
 
 
-### Tidy data
+# Tidy data
 `ggplot()` really starts to sing, however, when we combine it with some of the newest innovations in R, namely the`dplyr` and the `tidyr`package.  To introduce these, it is crucial to understand the difference between long and wide data.  
 
 In long (tidy) data, each column is one variable and each row is one observation.   Currently our data very tidy, however, the difference between the two is sometimes blurry and can change depending on your purposes. Sometimes we want to *reshape* data from wide to long format.  This can get to be a pretty technical - even philosophical - distinction, and we won't go into it.
 
 Here's a quote from Hadley Wickham that illustrates this: 
 
-> A dataset is a collection of values, usually either numbers (if quantitative) or strings (if qualitative). Values are organised in two ways. Every value belongs to a variable and an observation. A variable contains all values that measure the same underlying attribute (like height, temperature, duration) across units. An observation contains all values measured on the same unit (like a person, or a day, or a race) across attributes.
+> A dataset is a collection of values, usually either numbers (if quantitative) or strings (if qualitative). Values are organised in two ways. Every value belongs to a variable and an observation. A variable contains all values that measure the same underlying attribute (like height, temperature, duration) across units. An observation contains all values measured on the same unit (like a person, or a day, or a race) across attributes [Wickham, 2018](https://cran.r-project.org/web/packages/tidyr/vignettes/tidy-data.html).
 
 That said, sometimes it can be blurry and you might want to reshape data depending on the purpose. For example, you might be satisfied with two variables `home phone` and `work phone` in one context. But in another (e.g. fraud detection) you might want two different variables `phone type` and `phone_number`. 
+
 #### Assignment 2
 >1. How many variables are there in this data set? What are they?
 
@@ -66,19 +67,11 @@ The reason that it is worth thinking about how you want your data to be shaped i
 
 The `tidyr` package makes it remarkably easy to reshape data from long to wide and vice verse.  The key function is the `gather()` function. It takes the data frame you want to reshape (e.g. gather) as the first argument, then it takes two arguments, the defaults are `Variable` and `value`. Lastly, you can specify specifically which columns you want to `gather()`
 
-To deal with the example above: 
-```{r show-table1, results='markup'}
-#Show table1
-table1
-#Show table2
-table2
-```
-
-We want to fold the two variables `cases` and `population` into two new variables. We dont' want to touch the variables `country` and `year`
+To deal with the example above we want to fold the two variables `cases` and `population` into two new variables. We dont' want to touch the variables `country` and `year`
 
 So it looks like this. 
 
-```{r gather-table-1, results='markup'}
+```{r gather-table-1, results='markup', echo=T}
 
   #Gather the data frame, name new columns Variable, Value, do not touch country and year
 gather(table1, Variable, Value, cases, population) 
@@ -87,9 +80,8 @@ gather(table1, Variable, Value, cases, population)
 
 Now let's turn to our data frame: 
 ```{r, show-wide-data, results='markup'}
-#show first 6 rows of ces
-head(ces)
-vars
+#print vars
+print(vars)
 ```
 
 The variables `pers_ret` and `pers_fdpol` were both variables about a person's financial situation. The only difference was the first was about the person's financial situatino in general and the second was about whether the federal government had any impact on that. 
@@ -98,31 +90,36 @@ We might want to visualize the distribution of both responses in one plot.  But 
 
 One problem we face is that `pers_ret` and `pers_fdpol` are `labelled` variables.  Take a look. 
 
-```{r examine-personal-federal}
+```{r examine-personal-federal,  echo=T, results='markup'}
 #Show pers_ret
-ces$pers_ret
+head(ces$pers_ret)
 #Show pers_fdpol
-ces$pers_fdpol
+head(ces$pers_fdpol)
 ```
 
 
-Part of the problem stems from the fat that the value labels are not in a meaningful order, i.e. `1=Better`, but `2=Worse`, but `3=Stayed the same`.That is not our problem, that's a problem of the original data set.  It would be more intuitive to have the levels go from one extreme to the other.  
+Part of the problem stems from the fact that the value labels are not in a meaningful order, i.e. `1=Better`, but `2=Worse`, but `3=Stayed the same`.That is not our fault, but it is our problem. It would be more intuitive to have the levels go from one extreme to the other.  
 
-We coudl attack this from a number of ways. 
-
-We could recode the underlying number to a factor level. This relies on turning the `labelled` variable into a `number` with the function `as.numeric()`.  
-
-```{r sample-recode, results='markup'}
-ces$personal<-Recode(as.numeric(ces$pers_ret),"1='Better' ; 2='Worse' ; 3='Same'", levels=c('Worse', 'Same' ,'Better'), as.factor=T)
-#federal policies
-ces$federal<-Recode(as.numeric(ces$pers_fdpol),"1='Better' ; 2='Worse' ; 3='Same'", levels=c('Worse', 'Same' ,'Better'), as.factor=T)
-
-```
+We coudl attack this from a number of ways. The easiest way, though would be as follows.
 
 #### Assignment 3
-> 1. Gather `personal` and `federal` into one variable called `Finances`. Store the new data frame as out.Check the names of `out` to be sure that it worked. Plot with a barplot the distribution of responses facetting now by the new variable Finances. 
+> 1.Recode the variables `pers_ret` and `pers_fdpol` into two new variables. Save them as `personal` and `federal`. This relies on turning the `labelled` variable into a `number` with the function `as.numeric()`.  The `Recode()` function **does not work** with labelled variables. Set the levels to go in an order from `Worse` to `Better`.
 
 ```{r assignment-3-solution}
+ces$personal<-Recode(as.numeric(ces$pers_ret),
+                     "1='Better' ; 2='Worse' ; 3='Same'", 
+                     levels=c('Worse', 'Same' ,'Better'), as.factor=T)
+#federal policies
+ces$federal<-Recode(as.numeric(ces$pers_fdpol),
+                    "1='Better' ; 2='Worse' ; 3='Same'", 
+                    levels=c('Worse', 'Same' ,'Better'), as.factor=T)
+
+```
+
+#### Assignment 4
+> 1. Gather `personal` and `federal` into one variable called `Finances`. Store them in a new data frame as out.Check the names of `out` to be sure that it worked. Plot with a barplot the distribution of responses facetting now by the new variable Finances. 
+
+```{r assignment-4-solution}
 str(ces)
 #Examine variables
 ces$personal
@@ -145,7 +142,7 @@ names(out)
 ggplot(out, aes(x=Value))+geom_bar()+facet_grid(~Finances)
 ```
 
-# filter, selecting
+## Filtering and Selecting
 The tidyverse is meant to accomplish a few things. One of these things is to improve the readability of R code. Base R can be quite messy. 
 
 One of the key innovations in the `tidyverse()` is the use of this character `%>%`. This is a pipe that sends the results of one command to the command on the next line. Technically, this character only works when the `magritr` library is loaded, but this is always loaded automatically when you run `library(tidyverse)` so you almost never have to worry about it.  
@@ -154,7 +151,7 @@ Another big issue is consistency. The `tidyverse()` is built ona consistent set 
 
 For example, the base R way to select a few variables is to use the `subset()` command with the `select` argument: 
 
-```{r show-subset-select}
+```{r show-subset-select, results='markup'}
 subset(ces, select=c('gender', 'ideology'))
 ```
 The same command is used to subset *cases* , not just variables.
@@ -167,7 +164,7 @@ subset(ces, select='gender',gender=='M')
 By contrast the tidyverse uses two separate commands for these two different functions: `filter()` and `select()`
 
 
-```{r, tidyverse-filter, results='markup'}
+```{r, tidyverse-filter, results='markup',echo=T, include=T}
 filter(ces, gender=='M')
 ```
 
@@ -185,7 +182,7 @@ ces %>%
 
 Now, we can even feed that into ggplot2 to draw a histogram of men's ideology scores. Note that because we are feeding the data frame line-by-line to the next function, there is no need to name the data frame in the ggplot2 command, we can just substitute it with a `.`
 
-```{r}
+```{r plot-male-ideology}
 
 #Start with a data frame
 ces %>% 
@@ -199,10 +196,10 @@ ces %>%
 
 
 
-#### Assignment 4
-> 1. In the last plot that we made, there were missing values that were reported. We could filter the dataset to exclude those values.  
+#### Assignment 5
+> 1. In the plot for Assignment 4 that we made, there were missing values that were reported. Eliminate the missing values using `filter()` and `is.na()`. 
 
-```{r assignment-4}
+```{r assignment-5}
 #check out
 str(out)
 #Start with out as a data frame
@@ -214,65 +211,201 @@ out %>%
 
 ```
 
-# Grouping and summarizing
-## Calculating group means
+## Grouping, summarizing and mutating
+### Selecting, counting group membership. 
 
-One of the most common things that we do in the social sciences is to calculate group means. This is fundamental in experimental fields like psychology and common in fields that deal with survey research. 
+In the first class we learned how to use the `table()` command to create contingency tables. It works really well, but it breaks down somewhat when trying to create tables of three or more variables. 
 
 The `tidyverse` makes it extremely easy. 
 
-The central concepts that make it easy are `grouping` and `summarizing`.  Both have their own functions with those names: `group_by()` and `summarise()`.
+The central concepts that make it easy are `grouping` , `summarizing` and `mutating`.  All have their own functions with those names: `group_by()`, `summarise()` and `mutate`.
 
 Grouping a data frame prepares it for analysis based on the values of the grouping variable. 
 
 Summarizing that data frame then performs some analysis on each group formed by the grouping variable. 
+Suppose we want to compare `gender`, `degree` and `vote`. 
 
-Here, we want 
+Mutating transforms an existing column into a new column and adds it to the existing data frame. 
 
-```{r calculate-group-means}
-#Take dataframe
-ces %>% 
-  #name the grouping variable
-  group_by(gender) %>% 
-  #Then summarize each group by calculating its mean
-  summarize(
-    mean(ideology, na.rm=T)
-  )
+First we can `select` the three variables of interest, and save them in a temporary data frame called `out`. We could use any name, but `out` is useful because it is quick to type, and sort of implies something temporary. Others also often use `tmp` or `temp`. I often use `test`. 
+
+```{r select-example, results='markup'}
+names(ces)
+out<-ces %>% 
+  select(gender, degree, p_votechce)
+#Check the results 
+out
 ```
 
-You can store the results of the summarizing function in a new variable name. 
+#### Assignment 6
+>1. Recode `p_votechce` to include only Conservative, NDP, Liberal, BQ voters . Store it in `vote`. Remember to use `vals` and `as.numeric`. 
 
-```{r calculate-group-means-avg}
-#Take dataframe
-ces %>% 
-  #name the grouping variable
-  group_by(gender) %>% 
-  #Then summarize each group by calculating its mean
-  summarize(
-    avg=mean(ideology, na.rm=T)
-  )
+```{r assignment-6-solution}
+ces$vote<-Recode(as.numeric(ces$p_votechce), "1='Conservative' ; 2='Liberal' ; 3='NDP'; 4='BQ' ; else=NA", levels=c('Conservative', 'Liberal', 'NDP', 'BQ'), as.factor=T)
+
 ```
 
-The other thing you can do is create multiple groups. Let's say we want to find the average ideology score by degree status and gender.
-
-```{r average-ideology-degree}
-
-ces %>% 
-  #name the grouping variable
-  group_by(gender, degree) %>% 
-  #Then summarize each group by calculating its mean
-  summarize(
-    avg=mean(ideology, na.rm=T)
-  )
+Now we can reselect and form groups with `group_by`
+```{r select-variables, results='markup'}
+#We will start with `ces`
+out<-ces %>% 
+  #select gender, degree and vote
+  select(gender, degree, vote) %>% 
+  #Form groups of gender and degree
+  group_by(gender, degree, vote)
+#print
+out
 ```
 
-Then we can plot them. 
+The next thing to do is to `summarize` the groups by counting how many respondents are in each group. Inside the `summarise` command, we call a function `n()` which counts the number of cases in a group. 
 
-#### Assignment 5
-> 1. PLot the average ideology scores for gender and degree. Filter out missing values. 
 
-```{r assignment-5-solution}
+```{r summarize-degree-gender-vote}
+#Call out, which we stored above
+out<-out %>% 
+  #Summarize groups, provide a name for the new variable
+  summarize(number=n()) %>% 
+#Filter out missing values
+na.omit()
+```
 
+And then we can plot. Note: when we have pre-caclulated the group values, we can plot it with `geom_col` (short for column)
+
+```{r plot-degree-gender-vote}
+out %>% 
+  ggplot(., aes(x=degree, y=number, fill=vote))+geom_col(position='dodge')+facet_grid(~gender)
+```
+
+#### Sidebar
+
+You can specify which colors to use.  We do this by changing the `scale`.  Again, the whole `tidyverse` is really built on consistency, which is really great. To access the nature of the scales in a plot, you can specify `scale_fill_manual`. Note: we use `scale_fill` because we are working with a barplot. If we were working with a lineplot and wanted to change the line color, we would specify `scale_color_manual`. And if we wanted to modify the linetype, we would specify `scale_linetype_manual`. 
+
+Inside `scale_fill_manual` you simply set the values. They apply to the order of the factor levels of the grouping variable, in this case, `vote`. 
+
+```{r change-colors}
+
+  out %>% 
+  ggplot(., aes(x=degree, y=number, fill=vote))+geom_col(position='dodge')+facet_grid(~gender)+scale_fill_manual(values=c('blue', 'red', 'orange', 'cyan'))+labs(title='Vote By Degree Status And Education')
+
+```
+
+#### Assignment 7
+> 1. we also have a variable `inequal_cat` which asks whether inequality is a big problem in Canada. Count the numer of people who think so by degree status (`degree`) income (`income`) and vote (`vote`)
+
+```{r assignment-7-solution}
+ces %>% 
+select(degree, vote, income, inequal_cat) %>% 
+  group_by(degree, vote, income, inequal_cat) %>% 
+  summarize(n=n()) %>% 
+  na.omit() %>% 
+  ggplot(., aes(x=income, y=n, fill=inequal_cat))+geom_col(position='dodge')+facet_grid(degree~vote)
+```
+### Mutating to calculate percentages
+
+Often we want to go further then just summarizing groups and we want to transform a variable. This is `mutating`. Note that the table we produced above, summarizing group memberships does not give us the table **percentages**.  Sometimes the raw frequencies are good enough, sometimes we want percentages. 
+
+What we want to do is transform the results of the `summarise` function counting the group memberships to report the proportion of each group. 
+
+Here is how we would calculate the percentages of the table on `degree`, `gender` and `vote`.
+
+Note that we need to form *new* groups just before mutating, because we want to take the group size and divide it by the size of the party group out of the size of the overall group of, for example `men with no degrees`
+
+```{r percentage-degree-gender-vote, results='markup'}
+#Start with ces
+ces %>% 
+  #Select variables of interest
+  select(gender, degree, vote) %>% 
+  #group
+  group_by(gender, degree, vote) %>% 
+  #summarize
+  summarise(n=n()) %>% 
+  #na.omit
+  na.omit() %>% 
+ #Here is our mutate command
+mutate(pct=n/sum(n))
+```
+
+So, now we have the percentage of each party's supporters of the overall groups formed by the categories of `gender` and `vote`. Wae can also plot this percentages, *not* the raw frequencies as above. And with some brackets and using the `*` we can turn it into a percentage. 
+
+
+```{r final-mutate}
+#Start with ces
+ces %>% 
+  #Select variables of interest
+  select(gender, degree, vote) %>% 
+  #group
+  group_by(gender, degree, vote) %>% 
+  #summarize
+  summarise(n=n()) %>% 
+  #na.omit
+  na.omit() %>% 
+ #Here is our mutate command, pay attention to the brackets
+mutate(pct=(n/sum(n))*100) %>% 
+  #plot, note the new y-axis-value
+  ggplot(., aes(x=degree, y=pct, fill=vote))+geom_col(position='dodge')+facet_grid(~gender)+scale_fill_manual(values = c('blue', 'red', 'orange', 'cyan'))
+
+```
+
+#### Assignment 8
+> 1. Reproduce the summary of group memberships from the previous assignment. Calculate the group percentages and plot. 
+
+```{r assignment-8-solution}
+#Start with the data frame
+ces %>% 
+  #select variables of interest
+select(degree, vote, income, inequal_cat) %>% 
+  #form the groups
+  group_by(degree, vote, income, inequal_cat) %>% 
+  #and count
+  summarize(n=n()) %>% 
+  #eliminate missing values
+  na.omit() %>% 
+  #form new groups for mutating
+  group_by(degree, vote, income) %>% 
+  #mutate
+  mutate(pct=(n/sum(n)*100)) %>% 
+  #plot
+  ggplot(., aes(x=income, y=pct, fill=inequal_cat))+geom_col(position='dodge')+facet_grid(degree~vote)
+```
+
+### Mutating to recode
+We can also use mutating to recode variables as we need them.
+
+#### Assignment 9
+>1. Suppose we want to do the same caculation as in Assignment 8, but we have too many income categories. Use mutate() and recode() to reduce the number of income categories to three (< 30, 30 to 110 and more than 110). Check `vals` to check the levels you need to recode. Remember you can use the `:` to select a range of values to recode. Remember to set the levels in a useful order. The levels need to be specified *exactly* as the new values of the factor. Store the new variable as income 2. Plot as above. 
+
+```{r assignment-9-solution}
+#Check vals to figure out recode.
+vals
+#Take the data frame
+ces %>% 
+  #select variables of interest
+select(degree, vote, income, inequal_cat) %>% 
+  #mutate income
+  mutate(income2=Recode(income, "1='0-$30K' ; 2:4='$30K-$110K' ; 5='$110K+'", levels=c('0-$30K', '$30K-$110K' , '$110K+'), as.factor=T)) %>% 
+  #form the groups
+  group_by(degree, vote, income2, inequal_cat) %>% 
+  #and count
+  summarize(n=n()) %>% 
+  #eliminate missing values
+  na.omit() %>% 
+  #form new groups for mutating
+  group_by(degree, vote, income2) %>% 
+  #mutate
+  mutate(pct=(n/sum(n)*100)) %>% 
+  #plot
+  ggplot(., aes(x=income2, y=pct, fill=inequal_cat))+geom_col(position='dodge')+facet_grid(degree~vote)
+```
+
+### Summarizing to calculating group means
+
+One of the most common things that we do in the social sciences is to calculate group means. This is fundamental in experimental fields like psychology and common in fields that deal with survey research. 
+
+
+#### Assignment 10
+> 1. Use the mean() function to calculate the average ideology scores by gender and degree status. Store the score in a new variable called `avg`. Plot them. 
+
+```{r assignment-10-solution}
 ces %>% 
   #name the grouping variable
   group_by(gender, degree) %>% 
@@ -280,12 +413,13 @@ ces %>%
   summarize(
     avg=mean(ideology, na.rm=T)
   ) %>% 
-  filter(is.na(gender)==F& is.na(degree)==F) %>% 
+na.omit() %>% 
   ggplot(., aes(x=gender, y=avg, col=degree))+geom_point()
-
 ```
 
-You can also create multiple variables. 
+
+
+Conveniently, you can also use summarize to create multiple variables. 
 
 ```{r show-standard-errors}
 ces %>% 
@@ -294,18 +428,142 @@ ces %>%
   na.omit() %>% 
   #Then summarize each group by calculating its mean
   summarize(
+    #Calculate the average
     avg=mean(ideology),
+    #Calculate the standard deviation
     sd=sd(ideology),
+    #calculate the number of respondents in each group with n()
   freq=n(), 
+  #Calculate the standard error
   se=sd/sqrt(freq)
   ) 
 ```
 
+This, then, can be fed into `ggplot2` and we can draw error bars with a `geom_vline` (see also `?geom_errorbar`).
 
-# Mutating and Summarizing 
 
-# Group Means 
+```{r show-plot-with-errorbars}
+ces %>% 
+  #name the grouping variable
+  group_by(gender, degree) %>% 
+  na.omit() %>% 
+  #Then summarize each group by calculating its mean
+  summarize(
+    #Calculate the average
+    avg=mean(ideology),
+    #Calculate the standard deviation
+    sd=sd(ideology),
+    #calculate the number of respondents in each group with n()
+  freq=n(), 
+  #Calculate the standard error
+  se=sd/sqrt(freq)
+  ) %>% 
+  ggplot(., aes(x=gender, y=avg))+geom_point(aes(col=degree))+geom_linerange(aes(ymin=avg-(1.96*se), ymax=avg+(1.96*se), col=degree))
+
+```
+
 
 # Generalized Linear Models
+
+Fitting generalized linear models (e.g. logistic regression ) is easy and similar to the `lm()` command. 
+
+We can model the probability that a respondent agrees that income inequality is a big problem as follows. 
+First we check the dependent variable
+
+```{r check-dependent-variable, results='markup'}
+#Check variables 
+head(ces$inequal_cat)
+
+```
+note that the reference category is * No* because it is the first level.  *If* we wanted to reverse that, it's quite easy.
+
+```{r reverse-reference category, eval=F}
+#Option One
+#Change the order of levels with levels()
+levels(ces$inequal_cat)<-c('Yes', 'No')
+#Show
+head(ces$inequal_cat)
+
+## Use relevel() command, #specify the reference level. 
+ces$inequal_cat<-relevel(ces$inequal_cat, 'No')
+#Show
+head(ces$inequal_cat)
+```
+
+We model it like this. 
+
+```{r logistic-regression-example, results='markup'}
+#Show model
+logistic1<-glm(inequal_cat ~ degree+gender, data=ces, family='binomial')
+#summary
+summary(logistic1)
+
+```
+Conclusion is that being female *increases* the log-odds of agreeing that income_inequality is a big problem by 0.75, controlling for level of education. Women seems less likely to agree that income inequality is a big problem. 
+
+We can double-check this, by doing a quick table of `gender`, `degree` and `inequal_cat`.
+Note the command `count()`. it's an extremely useful wrapper for the `group_by > summarize` functions above.  
+
+With one command, `count()` groups by the variables you provide, counts the number of respondents and then ungroups. 
+
+```{r show-gender-income-inequality, results='markup'}
+#
+ces %>% 
+  #select the three variables of interest
+  select(gender, degree, inequal_cat) %>% 
+  #Note the function count()
+  count(gender, degree, inequal_cat) %>% 
+  na.omit() %>% 
+  group_by(gender, degree) %>% 
+  #mutate
+  mutate(pct=n/sum(n)) 
+names(ces)
+```
+
+#### Assignment 11
+
+> . Use the Recode() command to recode the `vote` variable to a dichotomous variable, Conservative voter or Non-Conservative voter. Set the non-Conservative voter to be the reference level. Store the variable as `conservative`. Fit a series logistic regression models of voting for the Conservative Party, adding gender, degree, income progressively. Use stargazer() to print the results as text. Then use stargazer() to print out an html version to the desktop. 
+
+```{r assignment-11-solution, results='markup'}
+names(ces)
+#Check vote
+head(ces$vote)
+#
+ces$conservative<-Recode(ces$vote, "'Liberal'='Non-Conservative' ; 'NDP'='Non-Conservative' ; 'BQ'='Non-Conservative' ; 'Conservative' ='Conservative'", levels=c('Non-Conservative', 'Conservative'))
+#Fit the first model
+mod.con<-glm(conservative ~ gender, data=ces, family='binomial')
+#UPdate
+mod.con2<-update(mod.con, .~.+degree)
+mod.con3<-update(mod.con2, .~.+income)
+#Show
+stargazer(mod.con, mod.con2, mod.con3, type='text')
+
+#Print out 
+#PC users will have to modify the path name for their desktop. 
+stargazer(mod.con, mod.con2, mod.con3, type='text', out='~/Desktop/conservative_models')
+```
+
+
+## Predicted Values from model.
+
+We can also use `ggpredict()` to predict values. 
+
+```{r get-logistic-predicted-values}
+ggpredict(mod.con3, terms=c('income', 'degree', 'gender')) %>% 
+  ggplot(., aes(x=x, y=predicted, col=facet))+facet_grid(~group)+geom_point()+geom_line()
+
+```
+
+
+# Asking for help
+
+There are tons of tutorials out there.  Here are some links to some of the most usefl.
+
+
+The best place to ask for help is [Stackoverflow](http://www.stackoverflow.com).  
+
+
+
+
 
 

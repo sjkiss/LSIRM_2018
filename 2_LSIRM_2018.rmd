@@ -1,9 +1,9 @@
 ---
-title: "LSIRM 2018 - Introduction to R"
+title: "LSIRM 2018 - Introduction to R - Tutorial 2"
 author: "Simon Kiss"
 date: '2018-06-19'
 output: 
-  html_document:
+  html_document: 
     toc: true
     toc_float: true
     code_folding: hide
@@ -80,11 +80,13 @@ vals<-val_labels(ces)
 #### Assignment 3
 > 1. Look at the value labels and take note of what are missing values that need to be Recoded. 
 
-# Recoding variables
-
-```{r assignment-3-solution}
+```{r assignment-3-solution, results='markup'}
 vals
 ```
+
+# Recoding variables
+
+
 
 It looks like for every variable, except for `p_selfplace`, we can recode values 998 to 1000 to be missing. But in addition, some variables respondents also picked `don't know` or `refuse`. Some might try to make use of those data, but we'll just dump them for the moment. 
 

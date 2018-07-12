@@ -1,0 +1,39 @@
+---
+title: "LSIRM 2018 - Introduction to R - Tutorial 4"
+author: "Simon Kiss"
+date: '2018-07-12'
+output: html_document
+---
+---
+title: "LSIRM 2018 - Introduction to R - Tutorial 4"
+author: "Simon Kiss"
+date: '2018-07-04'
+output: 
+  html_document: 
+    toc: true
+    toc_float: true
+    code_folding: hide
+    
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=F, message=F, results='hide', fig.width=4, fig.height=3, fig.align='center')
+
+```
+
+# Advanced Data Management
+
+Often, we deal with datasets that are larger than what we started with. This can pose a few problems. 
+
+```{r load-library}
+library(haven)
+#read in data 
+nrow(ces)
+
+```
+
+# Mutating and summarizing multiple variables
+
+# Multiple Linear Models
+
+# Reporting Results (RMarkdown)
