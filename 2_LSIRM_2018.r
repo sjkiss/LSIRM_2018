@@ -32,7 +32,7 @@ val_labels(ces)
 vars<-var_label(ces)
 vals<-val_labels(ces)
 
-## ----assignment-3-solution-----------------------------------------------
+## ----assignment-3-solution, results='markup'-----------------------------
 vals
 
 ## ---- eval=F, echo=T-----------------------------------------------------

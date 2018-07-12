@@ -26,13 +26,120 @@ knitr::opts_chunk$set(echo = TRUE, warning=F, message=F, results='hide', fig.wid
 Often, we deal with datasets that are larger than what we started with. This can pose a few problems. 
 
 ```{r load-library}
-library(haven)
+library(tidyverse)
 #read in data 
-nrow(ces)
+ces_full<-read_sav('https://github.com/sjkiss/LSIRM_2018/raw/master/data/CES15_CPS%2BPES_Web_SSI%20Full.SAV')
+```
+#### Assignment 1
+>1. Get a feel for the size and nature of the data set.  Store teh value labels and variable names. *do not use the names for hte same objects from the previous lesson.* 
+
+```{r inspect}
+head(ces_full)
+str(ces_full)
+library(labelled)
+
+ces.vars<-var_label(ces)
+ces.vals<-val_labels(ces)
+```
+
+The `questionr` package has some really useful functions to look through labelled data. 
+
+```{r }
+library(questionr)
+#Sex
+lookfor(ces_full, 'sex')
+# 
+lookfor(ces_full, 'leader')
+lookfor(ces_full, 'economy')
+describe(ces_full, 'economy')
+```
+
+#### Assignment 2
+>1. Play around with the lookfor() command and the describe() commands 
+
+# Advanced selecting
+
+The `tidyverse` provides a lot of useful ways to select variables for analysis. Examine the help page for select. 
+
+```{r select-help}
+?select
+```
+#### ASsignment 3
+```{r}
+#OPtion 1
+ces_full %>% 
+  select(contains('emecon'))
+#Optino 2
+ces_full %>% 
+select(p_emecon_angr:p_emecon_hope)
+```
+
+We need to deal with the missing values.  Check the values again using `lookfor()`
+```{r}
+describe(ces_full, 'economy')
+```
+
+It looks like anything above 4, we can recode out as missing. 
+
+
+# Mutating and summarizing multiple variables
+
+There are two variants of `mutate()` that mutate multiple variables: `mutate_all()` changes all variables, `mutate_at() changes variables using the `select()` grammar above, and `mutate_if()` changes variables if a logical condition is met. 
+
+Inside `mutate_at()` we use two arguments `vars()` to say which variables we want to mutate and `funs` to say which function should be applied. 
+
+```{r recode-test}
+#Take the data.frame
+ces_full %>% 
+  #select only the emecon variables
+  select(contains('emecon')) %>% 
+  #We only want to mutate a subset of variables, so we select 
+  mutate_all(funs(Recode(., "4:1000=NA"))) %>% 
+  #Do a summary
+  summary()
+```
+
+
+One of the really useful things about the labelled package is that you can quite quickly and easily make use of the attached value labels and turn a variable that is stored as a `double-and-labelled` variable. Normally, without labelled variables, you can use `as.factor()` to convert something to a factor.  But `labelled` variables require their own command, `as_factor()`. 
+
+The other major advantage to this is that, after using the as_factor() command, the levels are not ordered by alphabet, they are orderd by the number they are associated with. So if 1 is `Never`, and 2 is `Always`, then the first level will be `Never` and the second will be `Always`. Using `as.factor()` from base R would reverse this because levels would be stored in alphabetical order.  
+
+```{r}
+ces_full %>% 
+  #select only the emecon variables
+  select(contains('emecon')) %>% 
+  #We only want to mutate a subset of variables, so we select 
+  mutate_all(funs(Recode(., "4:1000=NA"))) %>% 
+  as_factor()
+```
+
+So, now, in four lines of code, we have: 1) dealt with missing values and 2) converted labelled variables to factors for four variables. We could do a lot of stuff with this. 
+
+First, we can add a prefix to the recoded variables in the `funs()` argument
+
+```{r add-previx}
+ces_full %>% 
+  #select only the emecon variables
+  select(contains('emecon')) %>% 
+  #We only want to mutate a subset of variables, so we select 
+  mutate_all(funs(out=Recode(., "4:1000=NA"))) %>% 
+  as_factor() %>% 
+  select(contains('out')) -> econ_feeling
+#Check 
+econ_feeling
+#Check
+summary(econ_feeling)
+```
+This is convenient because now we can join the two data sets and add the recoded columns to the original data frame. 
+
+Or, and this would be even cooler, we can source the previous tutorial and join the two. 
+
+```{r}
 
 ```
 
-# Mutating and summarizing multiple variables
+
+
 
 # Multiple Linear Models
 
