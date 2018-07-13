@@ -86,9 +86,8 @@ print(vars)
 
 The variables `pers_ret` and `pers_fdpol` were both variables about a person's financial situation. The only difference was the first was about the person's financial situatino in general and the second was about whether the federal government had any impact on that. 
 
-We might want to visualize the distribution of both responses in one plot.  But because they are stored in two separate variables, this would be *very* hard to do in base-R.  This is a problem that the tidyverse was developed to solve.  
+We might want to visualize the distribution of both responses in one plot.  But because they are stored in two separate variables, this would be *very* hard to do in base-R.  This is a problem that the tidyverse() was developed to solve.  
 
-One problem we face is that `pers_ret` and `pers_fdpol` are `labelled` variables.  Take a look. 
 
 ```{r examine-personal-federal,  echo=T, results='markup'}
 #Show pers_ret
@@ -98,19 +97,22 @@ head(ces$pers_fdpol)
 ```
 
 
-Part of the problem stems from the fact that the value labels are not in a meaningful order, i.e. `1=Better`, but `2=Worse`, but `3=Stayed the same`.That is not our fault, but it is our problem. It would be more intuitive to have the levels go from one extreme to the other.  
+One problem we face is that for `pers_ret` and `pers_fdpol` the value labels are not in a meaningful order, i.e. `1=Better`, but `2=Worse`, but `3=Stayed the same`.
+
+That is not our fault, but it is our problem. It would be more intuitive to have the levels go from one extreme to the other.  
 
 We coudl attack this from a number of ways. The easiest way, though would be as follows.
 
 #### Assignment 3
-> 1.Recode the variables `pers_ret` and `pers_fdpol` into two new variables. Save them as `personal` and `federal`. This relies on turning the `labelled` variable into a `number` with the function `as.numeric()`.  The `Recode()` function **does not work** with labelled variables. Set the levels to go in an order from `Worse` to `Better`.
+> 1.Recode the variables `pers_ret` and `pers_fdpol` into two new variables. Save them as `personal` and `federal`. Set the levels to go in an order from `Worse` to `Better`.
 
 ```{r assignment-3-solution}
-ces$personal<-Recode(as.numeric(ces$pers_ret),
+ces$personal<-Recode(ces$pers_ret,
                      "1='Better' ; 2='Worse' ; 3='Same'", 
                      levels=c('Worse', 'Same' ,'Better'), as.factor=T)
+
 #federal policies
-ces$federal<-Recode(as.numeric(ces$pers_fdpol),
+ces$federal<-Recode(ces$pers_fdpol,
                     "1='Better' ; 2='Worse' ; 3='Same'", 
                     levels=c('Worse', 'Same' ,'Better'), as.factor=T)
 
@@ -197,18 +199,16 @@ ces %>%
 
 
 #### Assignment 5
-> 1. In the plot for Assignment 4 that we made, there were missing values that were reported. Eliminate the missing values using `filter()` and `is.na()`. 
+> 1. Filter the `out` data.frame so that it only includes people with 'No degree' and plot their responses to the finances questions.
 
 ```{r assignment-5}
 #check out
 str(out)
+
 #Start with out as a data frame
 out %>% 
-  #filter out missing values on the value label
-  filter(is.na(Value)==F) %>% 
-  #plot
-  ggplot(., aes(Value))+geom_bar()+facet_grid(~Finances)
-
+  #filter those with degrees and 'Men'. Dont' bother storing it. Check `vals` if necessary. 
+  filter(degree=='No degree' & gender=='M')
 ```
 
 ## Grouping, summarizing and mutating
@@ -230,7 +230,7 @@ Mutating transforms an existing column into a new column and adds it to the exis
 First we can `select` the three variables of interest, and save them in a temporary data frame called `out`. We could use any name, but `out` is useful because it is quick to type, and sort of implies something temporary. Others also often use `tmp` or `temp`. I often use `test`. 
 
 ```{r select-example, results='markup'}
-names(ces)
+
 out<-ces %>% 
   select(gender, degree, p_votechce)
 #Check the results 
@@ -238,10 +238,10 @@ out
 ```
 
 #### Assignment 6
->1. Recode `p_votechce` to include only Conservative, NDP, Liberal, BQ voters . Store it in `vote`. Remember to use `vals` and `as.numeric`. 
+>1. Recode `p_votechce` to include only Conservative, NDP, Liberal, BQ voters . Store it in `vote`. Remember to use `vals` to check what values should be recoded and how. 
 
 ```{r assignment-6-solution}
-ces$vote<-Recode(as.numeric(ces$p_votechce), "1='Conservative' ; 2='Liberal' ; 3='NDP'; 4='BQ' ; else=NA", levels=c('Conservative', 'Liberal', 'NDP', 'BQ'), as.factor=T)
+ces$vote<-Recode(ces$p_votechce, "1='Conservative' ; 2='Liberal' ; 3='NDP'; 4='BQ' ; else=NA", levels=c('Conservative', 'Liberal', 'NDP', 'BQ'), as.factor=T)
 
 ```
 
@@ -554,13 +554,6 @@ ggpredict(mod.con3, terms=c('income', 'degree', 'gender')) %>%
 
 ```
 
-
-# Asking for help
-
-There are tons of tutorials out there.  Here are some links to some of the most usefl.
-
-
-The best place to ask for help is [Stackoverflow](http://www.stackoverflow.com).  
 
 
 

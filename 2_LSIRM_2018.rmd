@@ -12,22 +12,33 @@ output:
 ---
 
 ```{r setup}
+
 knitr::opts_chunk$set(echo = TRUE, warning=F, message=F,  results='hide', fig.width=4, fig.height=3, fig.align='center')
+
 ```
 
 # Working With Data
 ## Reading Data In
-R has a number of functions meant to read data in from a variety of formats. The core functions are `read.table()` for plain text files, `read.csv()` for .csv files. More elaborate files (e.g. SPSS or Stata) require more advanced functions. The three main libraries that offer functions that read SPSS or Stata files are the foreign, haven, and rio libraries. Foreign is the oldest, haven and rio are newer.  
+R has a number of functions meant to read data in from a variety of formats. The core functions are `read.table()` for plain text files, `read.csv()` for .csv files. More elaborate files (e.g. SPSS or Stata) require more advanced functions. The three main libraries that offer functions that read SPSS or Stata files are the `foreign`, `haven`, and `rio` libraries. `Foreign` is the oldest, `haven` and `rio` are newer.  `Haven` was desiged by Hadley Wickham, architect of the whole suite of the `tidyverse`. 
+
+Ulimately, I think `haven` works the best, but it does involve the steepest learning curve. 
 
 My recommendation is to use the `haven` library to read SPSS and Stata files in. 
+
+Because it is part of the core set of `tidyverse` libraries, we load it with the `tidyverse` package. 
+
+However, one of the key innovations of `haven` is a new class of variable, the `labelled` class. To really deal with `labelled` variables, it is best to load the `labelled` library as well. 
 
 
 ## Reading in our Data set
 ```{r read-in}
-#ces<-rio::import('https://github.com/sjkiss/LSIRM_2018/blob/master/data/ces_data.sav?raw=true')
+#read-in
+#load haven
 library(haven)
+#load labelled
 library(labelled)
-ces<-read_sav('data/ces15_data.sav')
+
+ces<-read_sav('https://github.com/sjkiss/LSIRM_2018/raw/master/data/ces15_data.sav')
 
 ```
 
@@ -37,6 +48,7 @@ After reading data in, it is usually a good idea to inspect the data to get a fe
 There are a few commands that can be useful to inspect data frames.  
 
 ```{r, examine-data}
+###examine-data
 #Different ways of summarizing the data set
 #Check the first few rows
 head(ces)
@@ -53,17 +65,13 @@ names(ces)
 ```
 
 #### Assignment 1 
-> 1. How many missing values are there in each variable? Are there any variables that might cause problems in this regard? 
-> 2. Are there any values that look suspicious? 
+> 1. Are there any values that look suspicious? 
 
 # Looking at value labels.
 
-When you import SPSS or STATA data sets via the data with the `rio` package, R imports valuable metadata associated with each variable, including the variable label and the value labels. The variable and value labels are stored attached to each variable.  This is a litle inconvenient to look through them, so we use a function `gather_attrs()` to move them to the `data.frame()` level. It makes it easier to work with them. 
-
-
-
-Then, to get the variable and value labels, we use the following commands: `var_label` for variable labels and `val_labels` for value labels. 
+When you import SPSS or STATA data sets via the data with the `haven` package, R imports valuable metadata associated with each variable, including the variable label and the value labels. The variable and value labels are can be accessed with the following commands: `var_label` for variable labels and `val_labels` for value labels. 
 ```{r get-labels}
+#get-labels
 var_label(ces)
 val_labels(ces)
 
@@ -92,7 +100,7 @@ It looks like for every variable, except for `p_selfplace`, we can recode values
 
 The easiest function to recode variables is the `Recode` command in the `car` library. 
 
-Please note: there is a conflict between two recode commands; namely, there exists a `recode` in the `car` library (specified as `car::recode`) and in the `dplyr` library (part of the `tidyverse`, `dplyr::recode`). If one package is loaded *after* the other, then the first package's command is masked.  The best way to avoid this is to use capital-R `Recode` from the `car` library.  That will *always* and *only* call the `car::recode` command.  
+Please note: there is a conflict between two recode commands; namely, there exists a `recode` in the `car` library (specified as `car::recode`) and in the `dplyr` library (part of the `tidyverse`, `dplyr::recode`). If one package is loaded *after* the other, then the first package's command is masked.  To rectify this conflict, the author of the `car` package added a version of the same command that is capitalized, i.e. `Recode().` Fundamentally, the best way to avoid this is to use capital-R `Recode` from the `car` library.  That will *always* and *only* call the `car::recode` command.  
 
 
 ```{r, eval=F, echo=T}
@@ -105,11 +113,13 @@ So, for the income inquality variable `p_incineq`, we could safely recode any nu
 #load the car library
 library(car)
 #Recode 1
-test<-car::Recode(as.numeric(ces$p_incineq),"3:1000=NA", as.numeric=T)
+test<-Recode(ces$p_incineq,"3:1000=NA")
 #Recode 2
-test2<-Recode(as.numeric(ces$p_incineq), "3=NA; 4=NA; 998=NA; 1000=NA", as.numeric=T)
+test2<-Recode(ces$p_incineq, "3=NA; 4=NA; 998=NA; 1000=NA")
 #Summary test
 summary(test)
+#class test
+class(test)
 #summary test 2
 summary(test2)
 
@@ -119,42 +129,45 @@ There are a few things to notice about the `Recode()` command. Overall, the reco
 Notice now that, after the recode, the maximum value is 2. We've set missing values to be `NA` and they are not counted when we use `summary()`
 
 We also just dumped that recode result in a quick temporary variable called `test`.  What we really want is to save it in a new variable caled `inequal`. When you execute this command, watch what happens to the environment in the top right corner. 
+We can also recode numbers to factors.  In this case, it might make more sense to turn `inequal` into a factor.  
+
 
 ```{r, results='hide', echo=T}
-ces$inequal<-Recode(as.numeric(ces$p_incineq), "3:1000=NA")
 
-```
-
-We can also recode numbers to factors.  In this case, it might make more sense to collapse the `sex_r` variable to `gender` as a categorical variable. 
-```{r sex-gender}
-#recode sex into gender
-ces$gender<-Recode(ces$sex_r, "1='M' ; 2='F'", levels=c('M', 'F'), as.factor=T)
-
+ces$inequal<-Recode(ces$p_incineq, "1='Yes' ; 2='No'; 3:1000=NA", levels=c('No', 'Yes'), as.factor=T)
+vals
 ```
 There are a few things to note here. First, note that, inside the recodes, numbers are not quoted, but character strings are, with single-quotes. Second, there is an additional argument, `levels` that takes a character vector the order of which is important. The first level of the factor is the reference categor.  Lastly, there is the argument `as.factor` which is logical (i.e. either `TRUE` or `FALSE`). If TRUE, the new variable is stored a s a factor, if FALSE it is stored as just a character string. 
 
 
 
+
+
+
+Often, when you do Recodes, it is also useful to change the names of the variables, to something more user friendly. This has the added advantage of also keeping the original variables intact, just incase you make a mistake.
+
 #### Assignment 4
-> 1. Recode `income_full`, `p_selfplace` and `education` such that missing values are converted to NA. Save `income_full` as `income` and `p_selfplace` as `ideology`. You will have to go back and forth to `vals` to remind yourself of what the missing values are. Recode education into a new variable, `degree` which has the levels `no degree` and `degree`. Check `vals` to get the range of values right.  
+> 1. Recode `income_full`, `p_selfplace` , `education`  and `sex_r` such that missing values are converted to NA. Save `income_full` as `income` and `p_selfplace` as `ideology`. You will have to go back and forth to `vals` to remind yourself of what the missing values are. Recode education into a new variable, `degree` which has the levels `no degree` and `degree`. Recode `sex_r` to `gender` using `M` and `F`. Set `M` to be the reference category. Check `vals` to get the range of values right.  
 
 ```{r assignment-4-solution}
 #education
 vals$education
 #education missing values
-ces$education<-Recode(as.numeric(ces$education), "12:1000=NA")
+ces$education<-Recode(ces$education, "12:1000=NA")
 #degree
 #check vals
 vals
 #Recode eduation to degree
-ces$degree<-car::Recode(ces$education, "1:7='No degree' ; 8:11='Degree'", levels=c('No degree', 'Degree'), as.factor=T)
+ces$degree<-Recode(ces$education, "1:7='No degree' ; 8:11='Degree'", levels=c('No degree', 'Degree'), as.factor=T)
 
 #Income missing values
-vals$income
-ces$income<-Recode(as.numeric(ces$income_full), "6:1000=NA")
+ces$income<-Recode(ces$income_full, "6:1000=NA")
+
 #Recode p_selfplace
-ces$ideology<-Recode(as.numeric(ces$p_selfplace), "1000=NA")
-str(ces)
+ces$ideology<-Recode(ces$p_selfplace, "1000=NA")
+
+#recode gender
+ces$gender<-Recode(ces$sex_r, "1='M' ; 2='F'", levels=c('M', 'F'), as.factor=T)
 
 ```
 
@@ -162,11 +175,11 @@ str(ces)
 Note: There are ways to automate this and we'll deal with those tomorrow. 
 
 ```{r summary-ces}
+#check summary
 summary(ces)
+#check structure
+str(ces)
 ```
- 
-
-Often, when you do Recodes, it is also useful to change the names of the variables, to something more user friendly. This has the added advantage of also keeping the original variables intact, just incase you make a mistake.
 
 
 # Describing results
@@ -179,18 +192,18 @@ desc<-describe(ces)
 ```
 
 # Plotting
+To do our plotting, we will make use of the `ggplot2` library, party of the core suite of `tidyverse` packages. 
 ```{r load-tidyverse}
+#load full tidyverse
 library(tidyverse)
 
-library(ggplot2)
-library(dplyr)
 ```
 
 This is where the fun begins.  
 
 Base R's graphics are built around the `plot()` command.  The tidyverse's `ggplot2` plotting function is much more systematic and built on consistent principles.  It's basically better.
 
-The `ggplot()` command is the basic command which contains the basic parameters of a graph and then specifics are added to it.  Below, we specify the underlying data -- `ces` -- and the two most important aesthetics of a graph, the x and the y variable.  Note: in ggplot2 ``aesthetics'' has a very particular meaning. Namely, it maps particular visual features of a plot (i.e. color, shape of points, type of line, the fill of bars) to the values of variables (see the figure below).
+The `ggplot()` command is the basic command which contains the basic parameters of a graph and then specifics are added to it.  Below, we specify the underlying data -- `ces` -- and one of the two most important aesthetics of a graph, the x variable.  Note: in ggplot2 ``aesthetics'' has a very particular meaning. Namely, it maps particular visual features of a plot (i.e. color, shape of points, type of line, the fill of bars) to the values of variables (see the figure below).
 
 ```{r, make-plot, fig.cap='No plot!'}
 
@@ -212,12 +225,14 @@ But nothing appears.  This is because the second core aspect of the plot is the 
 There are *a ton* of geoms in the `ggplot2` library. See the [cheatsheet](https://www.rstudio.com/wp-content/uploads/2015/03/ggplot2-cheatsheet.pdf) for details. 
 
 #### Assignment 6
-> 1. Produce a density plot of ideology. Save it as `plot1`. 
+> 1. Produce a density plot of ideology. Save it as `plot1`.  print plot1
 
 ```{r assignment-6-solution}
+#save plot1
+plot1<- ggplot(ces, aes(x=ideology))+geom_density()
 
-plot1<-  ggplot(ces, aes(x=ideology))+geom_density()
-
+#print
+plot1
 ```
 
 You can modify the colors and visual aspects of the plot in the `geom()` section. When you just want to force the plot to show colors and not be linked or mapped to another variable, you just set the aesthetic (e.g. `color`, `linetype`, `size` or `width` to be a particular value). Handily, to update a plot, you can call the plot and just add a replacement `geom()` to it.
@@ -234,7 +249,7 @@ This:
 plot1+geom_density(linetype=3)
 ```
 
-does not change anything. 
+does not change anything, because changing linetypes on density plots is not meanningful. 
 
 
 Making bivariate plots is just a matter of adding in a y-variable for the y-axis.  
@@ -264,12 +279,22 @@ Very quickly, we can also add in third grouping variables.  Like education and /
 
 We can do gender as follows.  
 The key is to use the `aes()` argument in the `geom()` to map a specific visuable attribute of the plot to values of the grouping variable. 
+
 ```{r, plot-4,include=T}
 #Make plot 4, save as plot4
-plot4<-ggplot(ces, aes(x=income, y=ideology, group=gender))+geom_point(aes(col=gender))
+plot4<-ggplot(ces, aes(x=income, y=ideology,col=gender))+geom_point()
 #Print plot4
 plot4
 
+```
+
+### Sidebar: omitting missing values. 
+Note: there are some people who have not declared their gender and so have NA. These can be eliminated quite easily. One way is to wrap `ces` in the argument `na.omit()` which removes any cases that have missing values. 
+
+```{r}
+plot4<-ggplot(na.omit(ces), aes(x=income, y=ideology,col=gender))+geom_point()
+#Print plot4
+plot4
 ```
 
 #### Assignment 8  
@@ -277,7 +302,7 @@ plot4
 1. Instead of modifying the point colors by category of gender, change them by shape. Save it as `plot4a`
 
 ```{r assignment-8-solution}
-plot4a<-ggplot(ces, aes(x=income, y=ideology, group=gender))+geom_point(aes(shape=gender))
+plot4a<-ggplot(na.omit(ces), aes(x=income, y=ideology, shape=gender))+geom_point()
 plot4a
 ```
 
@@ -297,13 +322,23 @@ plot4b<-plot4+geom_smooth(method='lm', aes(col=gender))
 plot4b
 ```
 
+We could add a fourth variable to this visualization by making a `facet` or a panel. In this case, we could do plot ideology by income, colored by gender, but panelled by degree status and . 
 
+There are two styles of faceting `facet_grid` and `facet_wrap`. Both use a formula notation which separates a left-hand side variable from a right -hand side variable with a `~`. when it comes time to fit linear models, this will be how we separate dependent from independent variables. here, we use it to separate variables that form the row panels from variables that form the column panels. and if there are no row or column variables, we can leave one side of the formula blank. 
+
+I *generally* prefer `facet_grid`
+
+```{r show-facet}
+
+plot4b+facet_grid(~degree)
+
+```
 
 #### Assignment 9
-> 1.. Produce another scatterplot income and ideology but group the points by education using color to differentiate
+> 1.. Produce another scatterplot income and ideology but group the points by education using color to differentiate. Use na.omit()
 
 ```{r assignment-9-solution}
-plot5<-ggplot(ces, aes(x=income, y=ideology))+geom_point(aes(col=degree))+geom_smooth(aes(col=degree), method='lm')
+plot5<-ggplot(na.omit(ces), aes(x=income, y=ideology))+geom_point(aes(col=degree))+geom_smooth(aes(col=degree), method='lm')
 plot5
 ```
 
@@ -312,6 +347,12 @@ The amazing thing about R in general and what has been a major driver in it s su
 
 ```{r}
 plot5+labs(x='Income', y='Ideology', title='Ideology on Income, CES 2015')
+```
+
+We can also use the `cowplot()` library to combine multiple different plots. 
+```{r show-cowplot}
+library(cowplot)
+plot_grid(plot1, plot2, plot3, plot4)
 ```
 
 # Bivariate Analysis - Continuous
@@ -332,41 +373,40 @@ To produce contingency tables, you just use the `table` command.
 Here we check wither men and women differ in their views of whether inequality is a big problem. 
 
 
-```{r, table-1, results='markup'}
-table(ces$gender, ces$inequal)
-
+```{r tab1, results='markup', echo=T}
+#save the table in table1
+tab1<-table(ces$gender, ces$inequal)
+#print table1
+tab1
 ```
 
-#### Assignment 10
-1. Recode`ces$inequal` to be a factor. Check `vals`. Save it as `inequal_cat`. Print the cross tab again
+## Getting tables out of R
 
-```{r assignment-10-solution}
+The easiest way to get tables out of R is to use the `xtable()` package.  It is designed to take R output and prdouce either $\LaTeX$ or HTML output. We want html output becaues from there you can easily copy and paste it into a Word document.
 
-ces$inequal
-#Check values
-vals
-ces$inequal_cat<-Recode(ces$inequal, "1='Yes' ; 2='No'", as.factor=T)
-#Crosstab
-tab2<-table(ces$gender, ces$inequal_cat)
+```{r tab1-output, results='hide', echo=T,eval=F}
+#Note load library
+library(xtable)
+#Print html table, note if using a PC you must change this. 
+print(xtable(tab1, caption='Inequality is a problem by gender'),  type='html', file='~/Desktop/tab1.html')
 ```
+
+
 
 We can do a lot with this. Two common things to do with this are to produce a chi-squared test and to do a table of percentages.
 ```{r chi-sq-prop-table, results='markup'}
 
 #Chi-sq.test
-chisq.test(tab2)
+chisq.test(tab1)
 #For prop.table you can produce either row (1) or column (2) percentgates
 #Compare
-prop.table(tab2, 1)
+prop.table(tab1, 1)
 #With
-prop.table(tab2, 2)
+prop.table(tab1, 2)
 ```
-```{r}
-library(cowplot)
-plot_grid(plot1, plot2, plot3, plot4)
-```
-# Linear Models
 
+
+# Linear Models
 The linear model is very easy to fit.  It uses the formula notation which involves a `~`. The dependent variable is on the left, the covariates (i.e. predictors, independent variables are on the right. )
 
 ```{r lm-model1, results='markup'}
@@ -402,10 +442,16 @@ summary(mod3a)
 
 
 #### Assignment 11
-> 1. Model support for the belief that more or less should be done to reduce income inequality with a series of linear models (ces$p_gap). Check `vals` to remind yourself what the values are. Fit four different models with one variable each: income, ideology, education (as continuous) and gender. Then fit one last model with all four in one model. Then, add one more model where gender is interacted with all three of the other covariates.  You should have six separate models. Summarize each. 
+> 1. Model support for the belief that more or less should be done to reduce income inequality with a series of linear models (ces$p_gap). Check `vals` to remind yourself what the values are. Hint: To aid in intrepretation, we might want to reverse the values of p_gap. 
+
+> Fit four different models with one variable each: income, ideology, education (as continuous) and gender. Then fit one last model with all four in one model. Then, add one more model where gender is interacted with all three of the other covariates.  You should have six separate models. Summarize each. 
 
 ```{r assignment-11-solution}
-m1<-lm(p_gap~income, data=ces)
+#Check 
+ces$p_gap
+ces$gap<-Recode(ces$p_gap, "1=4; 2=3; 3=2; 4=1; 6:1000=NA")
+#MODEL
+m1<-lm(gap~income, data=ces)
 m2<-update(m1, .~+ideology, data=ces)
 m3<-update(m2, .~+education, data=ces)
 m4<-update(m3, .~+gender, data=ces)
@@ -434,7 +480,8 @@ Crucially, they can be exported as an html file to your desktop and you can inse
 ```{r export-regressions, results='hide'}
 stargazer(m1, m2, m3, m4, m5, m6, type='html', out='model_results.html')
 ```
-There is one significant interaction, `gender:ideology`, so let's fit a new model, where we drop all interactions except that one.  
+There is one moderately significant interaction, `gender:ideology`, so let's fit a new model, where we drop all interactions except that one.  
+
 #### Assignment 12
 >1. Fit a model that includes p_gap as the dependent variable, income, ideology education and gender as covariates and an interaction between gender and ideology. Call it m7. Note you can't use `update()` to subract terms.
 
@@ -445,11 +492,41 @@ summary(m7)
 ```
 ## Regression Diagnostics
 
+There are a powerful set of tools to produce diagnostic plots.  
+The `broom` package is useful. The `augment()` command adds all the usual diagnostic data to the original data frame that generated the data. 
+
+```{r-}
+#load broom
+library(broom)
+#Augment the model m7 with the diagnostic data, store the full data frame in m7.diag
+m7.diag<-augment(m7)
+```
+
+Now it's easy to plot, say the residuals against the fitted values 
+```{r fitted-residuals}
+ggplot(m7.diag, aes(x=.fitted, y=.resid))+geom_point()+geom_smooth(method='loess')
+```
+
+Or a `qqplot`
+
+```{r qq-line}
+
+ggplot(m7.diag)+geom_qq(aes(sample=m7.diag$.std.resid))
+
+```
+
+Or the Cook's D Values by the hat values
+```{r cooks}
+ggplot(m7.diag, aes(x=.fitted, y=.cooksd))+geom_point()+geom_smooth(method='loess')
+```
+
+
+See [here](https://ggplot2.tidyverse.org/reference/fortify.lm.html) for a good overview on how to produce all the different plots. 
 
 ## Predicted Values
 There are lots of ways to generate predicted values. One of the easiest ways is the `ggeffects` package (see [here](https://cran.r-project.org/web/packages/ggeffects/vignettes/marginaleffects.html) for an introduction). 
 
-```{r}
+```{r load-ggeffects}
 
 library(ggeffects)
 ```

@@ -34,11 +34,12 @@ head(ces$pers_ret)
 head(ces$pers_fdpol)
 
 ## ----assignment-3-solution-----------------------------------------------
-ces$personal<-Recode(as.numeric(ces$pers_ret),
+ces$personal<-Recode(ces$pers_ret,
                      "1='Better' ; 2='Worse' ; 3='Same'", 
                      levels=c('Worse', 'Same' ,'Better'), as.factor=T)
+
 #federal policies
-ces$federal<-Recode(as.numeric(ces$pers_fdpol),
+ces$federal<-Recode(ces$pers_fdpol,
                     "1='Better' ; 2='Worse' ; 3='Same'", 
                     levels=c('Worse', 'Same' ,'Better'), as.factor=T)
 
@@ -95,23 +96,21 @@ ces %>%
 ## ----assignment-5--------------------------------------------------------
 #check out
 str(out)
+
 #Start with out as a data frame
 out %>% 
-  #filter out missing values on the value label
-  filter(is.na(Value)==F) %>% 
-  #plot
-  ggplot(., aes(Value))+geom_bar()+facet_grid(~Finances)
-
+  #filter those with degrees and 'Men'. Dont' bother storing it. Check `vals` if necessary. 
+  filter(degree=='No degree' & gender=='M')
 
 ## ----select-example, results='markup'------------------------------------
-names(ces)
+
 out<-ces %>% 
   select(gender, degree, p_votechce)
 #Check the results 
 out
 
 ## ----assignment-6-solution-----------------------------------------------
-ces$vote<-Recode(as.numeric(ces$p_votechce), "1='Conservative' ; 2='Liberal' ; 3='NDP'; 4='BQ' ; else=NA", levels=c('Conservative', 'Liberal', 'NDP', 'BQ'), as.factor=T)
+ces$vote<-Recode(ces$p_votechce, "1='Conservative' ; 2='Liberal' ; 3='NDP'; 4='BQ' ; else=NA", levels=c('Conservative', 'Liberal', 'NDP', 'BQ'), as.factor=T)
 
 
 ## ----select-variables, results='markup'----------------------------------

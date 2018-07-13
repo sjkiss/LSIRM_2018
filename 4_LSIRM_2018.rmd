@@ -1,9 +1,4 @@
----
-title: "LSIRM 2018 - Introduction to R - Tutorial 4"
-author: "Simon Kiss"
-date: '2018-07-12'
-output: html_document
----
+
 ---
 title: "LSIRM 2018 - Introduction to R - Tutorial 4"
 author: "Simon Kiss"
@@ -25,8 +20,13 @@ knitr::opts_chunk$set(echo = TRUE, warning=F, message=F, results='hide', fig.wid
 
 Often, we deal with datasets that are larger than what we started with. This can pose a few problems. 
 
-```{r load-library}
+```{r load-libraries}
+
+library(haven)
+library(labelled)
 library(tidyverse)
+library(car)
+
 #read in data 
 ces_full<-read_sav('https://github.com/sjkiss/LSIRM_2018/raw/master/data/CES15_CPS%2BPES_Web_SSI%20Full.SAV')
 ```
@@ -36,10 +36,10 @@ ces_full<-read_sav('https://github.com/sjkiss/LSIRM_2018/raw/master/data/CES15_C
 ```{r inspect}
 head(ces_full)
 str(ces_full)
-library(labelled)
 
-ces.vars<-var_label(ces)
-ces.vals<-val_labels(ces)
+
+ces.vars<-var_label(ces_full)
+ces.vals<-val_labels(ces_full)
 ```
 
 The `questionr` package has some really useful functions to look through labelled data. 
@@ -50,12 +50,11 @@ library(questionr)
 lookfor(ces_full, 'sex')
 # 
 lookfor(ces_full, 'leader')
-lookfor(ces_full, 'economy')
-describe(ces_full, 'economy')
+
 ```
 
 #### Assignment 2
->1. Play around with the lookfor() command and the describe() commands 
+>1. Play around with the lookfor() command and the describe() commands. Find the questions that deal with the economy. What do these ask respondents?
 
 # Advanced selecting
 
@@ -64,8 +63,13 @@ The `tidyverse` provides a lot of useful ways to select variables for analysis. 
 ```{r select-help}
 ?select
 ```
+
+one of the most useful things is we can use the `:` operator that we learned in the first class to select a range of variables. Or we can use the sub-function `contains()` to return any variable that contains a supplied text string in its name. 
+
 #### ASsignment 3
-```{r}
+> 1. Select the four questions about the emotional response to the economy. 
+
+```{r select}
 #OPtion 1
 ces_full %>% 
   select(contains('emecon'))
@@ -74,13 +78,14 @@ ces_full %>%
 select(p_emecon_angr:p_emecon_hope)
 ```
 
-We need to deal with the missing values.  Check the values again using `lookfor()`
+We need to deal with the missing values.  Check the values again using `descibe()`
 ```{r}
 describe(ces_full, 'economy')
 ```
 
 It looks like anything above 4, we can recode out as missing. 
 
+We're going to do this below in a powerful way. 
 
 # Mutating and summarizing multiple variables
 
@@ -89,6 +94,7 @@ There are two variants of `mutate()` that mutate multiple variables: `mutate_all
 Inside `mutate_at()` we use two arguments `vars()` to say which variables we want to mutate and `funs` to say which function should be applied. 
 
 ```{r recode-test}
+
 #Take the data.frame
 ces_full %>% 
   #select only the emecon variables
@@ -101,7 +107,6 @@ ces_full %>%
 
 
 One of the really useful things about the labelled package is that you can quite quickly and easily make use of the attached value labels and turn a variable that is stored as a `double-and-labelled` variable. Normally, without labelled variables, you can use `as.factor()` to convert something to a factor.  But `labelled` variables require their own command, `as_factor()`. 
-
 The other major advantage to this is that, after using the as_factor() command, the levels are not ordered by alphabet, they are orderd by the number they are associated with. So if 1 is `Never`, and 2 is `Always`, then the first level will be `Never` and the second will be `Always`. Using `as.factor()` from base R would reverse this because levels would be stored in alphabetical order.  
 
 ```{r}
@@ -115,9 +120,12 @@ ces_full %>%
 
 So, now, in four lines of code, we have: 1) dealt with missing values and 2) converted labelled variables to factors for four variables. We could do a lot of stuff with this. 
 
-First, we can add a prefix to the recoded variables in the `funs()` argument
+First, we can add a prefix to the recoded variables in the `funs()` argument.
 
-```{r add-previx}
+### Sidebar:  
+A useful feature of the tidyverse is that you can change the location of the assignment operator. You can actually put the assignment at the *end* of the chain, not at the beginning. 
+
+```{r add-prefix}
 ces_full %>% 
   #select only the emecon variables
   select(contains('emecon')) %>% 
@@ -130,17 +138,166 @@ econ_feeling
 #Check
 summary(econ_feeling)
 ```
-This is convenient because now we can join the two data sets and add the recoded columns to the original data frame. 
+#### Assignment 4 
+> 1. plot the distribution of responses. Think about the data, are they wide? Or long? What works best with ggplot2? What is the x-variable, what is the y? How would you gropu the variables to maximum effect?
 
-Or, and this would be even cooler, we can source the previous tutorial and join the two. 
+```{r assignment-4-solution}
+#take the data frame
+econ_feeling %>% 
+  #Gather 
+  gather(Emotion,Frequency) %>% 
+  #Filter out missing values
+  na.omit() %>% 
+  #count
+  count(Emotion, Frequency) %>% 
+  #plot
+  ggplot(. , aes(x=Frequency, y=n, fill=Frequency))+geom_col(position='dodge')+facet_grid(~Emotion)
 
-```{r}
+```
 
+## Renaming variables
+
+The tidyverse has an easy way to rename variables, surprise, it's the `rename()` function. 
+
+```{r rename}
+#See Rename variable, store back in econ_feeling
+econ_feeling<-econ_feeling %>% 
+  rename(., Angry=p_emecon_angr_out, Enthusiastic=p_emecon_enth_out,Fear= p_emecon_fear_out, Hope=p_emecon_hope_out)
+#Replot
+econ_feeling %>% 
+  #Gather 
+  gather(Emotion,Frequency) %>% 
+  #Filter out missing values
+  na.omit() %>% 
+  #count
+  count(Emotion, Frequency) %>% 
+  #plot
+  ggplot(. , aes(x=Frequency, y=n, fill=Frequency))+geom_col(position='dodge')+facet_grid(~Emotion)
+
+```
+
+
+## Correlation matrices
+
+But we might want to deal with people's feelings about the economy by treating them as numeric. It's dead easy using the command `cor()` 
+
+> 1. Select the economy variables using the code above. Produce a correlation matrix, using thhe command above. 
+ 
+```{r select-economy}
+library(psych)
+#We have the variables of interests as factors
+econ_feeling %>% 
+  #
+  mutate_all(funs(as.numeric(.))) %>% 
+  cor(., use='complete.obs')
+
+```
+
+one thing we should check is that the factor levels are in the right order. 
+
+```{r check-levels}
+str(econ_feeling)
+#Check value labels from the underlying variable
+val_labels(ces_full$p_emecon_angr)
+#Check levels of recoded variable
+levels(econ_feeling$p_emecon_fear_out)
+#Table recoded variable
+table(econ_feeling$p_emecon_angr_out)
+
+```
+
+The `GGally` package provides a nice way of visualizing corelation matrices. 
+
+```{r visualize-correlation-matrix, }
+#You will need to install this package
+#install.packages('GGally')
+#load library
+library(GGally)
+#Start with econ_feeling
+econ_feeling %>% 
+  #convert to numric
+  mutate_all(funs(as.numeric(.))) %>% 
+  ggpairs(.)
 ```
 
 
 
 
-# Multiple Linear Models
+
+
+
+
+## Joining two data.frames
+
+This is convenient because now we can join the two data sets and add the recoded columns to the original data frame. 
+Or, and this would be even cooler, we can source the previous tutorial and join the two. 
+
+Notice that by sourcing this file `3_LSIRM_2018.R` we will be indirectly sourceing `2_LSIRM_2018.R` . 
+
+```{r, results='hide'}
+source('https://raw.githubusercontent.com/sjkiss/LSIRM_2018/master/3_LSIRM_2018.r')
+```
+
+Notice in the environment section of RStudio, we have three dataframes `ces` with 19 variables `econ_feeling` with 4 variables and `ces_full` with 580. All have 7572 observations. 
+
+So all that recoding work that we did yesterday is not goe; we just reused it. 
+
+Now we can join `ces` from yesterday with `econ_feeling` from today using `bind_cols()`. 
+
+```{r bind-columns}
+#Take the data frame from yesterda
+ces %>% 
+  #bind columns to it from econ_feeling
+  bind_cols(., econ_feeling) -> ces
+```
+
+Now we can use all the data from the previous tutorial to analyze the new set of variables. 
+
+
+# Asking for help
+
+There are tons of tutorials out there.  Here are some links to some of the most useful: 
+
+1. [dplyr tutorial](http://genomicsclass.github.io/book/pages/dplyr_tutorial.html)
+2. [ggplot2 tutorial](http://r-statistics.co/Complete-Ggplot2-Tutorial-Part1-With-R-Code.html)
+3. [R for Data Science](http://r4ds.had.co.nz/)
+
+The best place to ask for help is [Stackoverflow](http://www.stackoverflow.com).  
+
+A big part of asking for help on stackoverflow is to provide a reproducible example so that people can start to help you. Here are some tools to help you do that.
+
+1. `dput()` writes out some R code that will, when others run it, reproduce your data frame exactly.  This output can then be posted into a Stackexchange question, which others can then use to help solve your problem.  
+
+The downside is that when you are dealing with a large data frame (like the full `ces` data set), the content to be pasted would be too long. 
+
+```{r dput}
+dput(ces[1:5,1:5])
+```
+
+2. Another option would be to recreate a simple data.frame that is smaller, but that looks conceptually just like yours and reprdocues your problem. Some tools to do this are the `rnorm()` command and the `sample()` command. 
+    - `rnorm()` generates a specified n random numbers from the the normal distribution  with a specified mean and standard deviation. 
+    - But this doesn't help us make factors. Let's say our problem arises out of a mix of numeric and categorical variables. `sample()` draws a random sample of size `n` from a vector provided . So let's say one of our factors has two values (like M or F) nad one of our factors has four values (say, age in 4 categories) 
+    
+```{r rnorm}
+#Make variable 1
+var1<-rnorm(100, mean=5, sd=1)
+```
+
+```{r sample}
+var2<-sample(c('M', 'F'), replace=T, size=100)
+var3<-sample(c('young', 'old', 'older', 'oldest'), replace=T, size=100)
+```
+
+Now we have three variables and we could combine them in a data.frame.
+
+```{r combine}
+help.df<-data.frame(var1, var2, var3)
+#show
+str(help.df)
+```
+
+We could paste the above code, then we could paste the code that creates our problem. Anyone could reproduce your problem, wihtout trading huge data files and provide you with a solution. 
+
+See also [this question](https://stackoverflow.com/questions/5963269/how-to-make-a-great-r-reproducible-example?rq=1) on Stackoverflow. 
 
 # Reporting Results (RMarkdown)

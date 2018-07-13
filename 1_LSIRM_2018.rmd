@@ -2,8 +2,11 @@
 title: "LSIRM 2017: Introduction to R"
 author: "Simon Kiss"
 date: '2017-07-13'
-output: html_document
-
+output: 
+  html_document: 
+    toc: true
+    toc_float: true
+    code_folding: hide
 ---
 
 # Introduction
@@ -21,7 +24,7 @@ The top right panel shows you the workspace you are working in and the bottom ri
 
 
 ```{r setup, echo=F, results='hide'}
-knitr::opts_chunk$set(echo = TRUE, message=F, warning=F, fig.align='center')
+knitr::opts_chunk$set(echo = TRUE, message=F, warning=F, fig.align='center', results='markup')
 ```
 Commands in R take the form of `command(x,y)`
 with arguments like x and y to each command inside the parentheses.  See what happens when you type the following in your script editor and then press `CMD-Return` (or `CNTL-ENTER`)
@@ -31,7 +34,7 @@ print('Hello world')
 ```
 The results of any command can be saved with R's assignment operator ` <- `. The objects on the left receive --  and become aliases for -- what is on the right.  It's an awkward thing it's true: one way to make it easier to remember is to interpret strings with the operator as left gets right.  So in the following command object `abc` gets the results of `print(hello world)`. 
 
-```{r save-objects, results='hide'}
+```{r save-objects}
 abc<-print('Hello world')
 
 ```
@@ -41,17 +44,14 @@ abc
 ```
 
 # How to install packages. 
+
+Packages are installed with the function `install.packages()`. We installed the necessary packages prior to this course. 
+
 ```{r install-tidyverse, eval=F}
 install.packages('tidyverse')
-install.packages('haven')
-install.packages('pastecs')
-install.packages('car')
-install.packages('psych')
-install.packages('stargazer')
-install.packages('xtable')
-install.packages('ggeffects')
 ```
 
+Installation is only ever required once. *Loading* them into working memory is a different story, however. These are loaded with `library()`, as necessary. 
 
 # Basics of the R language}
 ## Base R and the tidyverse
@@ -72,11 +72,6 @@ Running `library(tidyverse)` will load the following packages:
 library(tidyverse)
 ```
 
-In addition, we'll need the haven package from the `tidyverse` to load data into R
-
-```{r load-haven}
-library(haven)
-```
 
 And then, we'll need a few more libraries from base R to do our work.  
 
@@ -91,7 +86,7 @@ num<-1
 
 ```
 ### Character
-Character strings (e.g. letters and numbers stored as characters, not numbers) have to be single-quoted. Note, in general it's best to use single-quotes when dealing with single strings.  When combining multiple strings, double-quotes should be used.
+Character strings (e.g. letters and numbers stored as characters, not numbers) have to be single-quoted. Note, in general it's best to use single-quotes when dealing with single strings.  
 
 ```{r character}
 char<-'1'
@@ -123,11 +118,9 @@ Matrices are combinations of numeric vectors (and only numeric vectors) in rows 
 
 
 #### Assignment 1
-**Combine `age`, `gender`   and `lucky`  into one matrix called `matrix1   with 3 columns and n rows using the `matrix()`   command, the `ncol=` and/or the `nrow=`  arguments.** 
+>1. Combine `age`, `gender`   and `lucky`  into one matrix called `matrix1`   with 3 columns and n rows using the `matrix()`   command, the `ncol=` and/or the `nrow=`  arguments.** 
 
-[Solution](#assignment1)
-
-```{r assignment-1-solution-hidden, results='hide', echo=F}
+```{r assignment-1-solution, results='hide'}
 matrix1<-matrix(c(age, gender, lucky), nrow=3, ncol=3)
 
 ```
@@ -135,33 +128,43 @@ matrix1<-matrix(c(age, gender, lucky), nrow=3, ncol=3)
 R has a powerful way of accessing elements inside vectors and matrices. With single dimension matrices (i.e. vectors), a number inside square brakcets `[i]` returns the ith element of that vector.  
 
 #### Assignment 2
-**Get your own age from `age`. Get your own gender from `gender`. The trick is just remembering where in order of ages and genders yours were stored in.**   
+> 1. Get your own age from `age`. Get your own gender from `gender`. The trick is just remembering where in order of ages and genders yours were stored in.
 
-[Solution](#solution2)
+```{r assignment-2-solution, results='hide' }
+#The number in the square brackets indicates which element of the vector gender to return 
+age[1]
+gender[1]
+```
 
 In two-dimensional matrices (i.e. matrices that have rows and columns) the first position in the square brackets returns the row and the second position in the square brackets returns the columns. A comma separates the two. If you leave either the row or the column empty, R returns the whole row or column. *This is an important convention in R and I'm not aware of any function or command where this is reversed: first rows, then columns.*  
 
 
 #### Assignment 3
 
-**
-1. Get the first row of `matrix1`
+> 1. Get the first row of `matrix1`
 2. then get the second row 
 3. Then return the first column of `matrix1`
-**
 
-[Solution](#solution3)
+```{r assignment-3-solution, eval=F}
+matrix1[1,]
+matrix1[2,]
+matrix1[,1]
+```
 
 You can also get a range of `consecutive` columns with the `:` notation.  And you can get a selection of columns with a vector of columns, by using the `c()` argument inside the square brackets (i.e. `c(4,6)`). 
 
 #### Assignment 4
 
-**
-1. Return the first through third columns of `matrix1`.  
+>1. Return the first through third columns of `matrix1`.  
 2. Return the first and third columns of `matrix1`. 
-**
 
-[Solution](#Assignment 4)
+```{r assignment-4-solution}
+#First through third
+matrix1[1:3,]
+#first and third
+matrix1[c(1,3),]
+
+```
 
 ### Data Frames
 
@@ -172,9 +175,9 @@ Data frames are special types of matrices.  They are also stored in rows and col
 data frames are constructed with the command `data.frame(variable_name=variable, variable_name=variable)`.
 
 #### Assignment 5
-** Make a data frame called `df` with the variables `age`, `gender` and `lucky` from the vectors we defined above `age`, `gender` and `lucky`.
+>1. Make a data frame called `df` with the variables `age`, `gender` and `lucky` from the vectors we defined above `age`, `gender` and `lucky`.
 
-```{r make-data-frame, results='hide'}
+```{r assignment-5-solution}
 df<-data.frame(age=age, gender=gender, lucky=lucky)
 ```
 
@@ -217,14 +220,15 @@ library(car)
 ```
 
 ```{r Recode-gender}
-Recode(df$gender, "0='male' ; 1='female'", as.factor=T)
+Recode(df$gender, "0='male' ; 1='female'", as.factor=TRUE)
 ```
 ```{r Recode-gender-2}
 df$gender2<-Recode(df$gender, 
                    "0='male' ; 1='female'", 
-                   as.factor=T)
+                   as.factor=TRUE)
 ```
 
+You can check the levels of a factor with the `levels()` command. 
 ```{r check-levels-gender-2}
 levels(df$gender2)
 
@@ -266,6 +270,9 @@ x*y
 x^2
 #Square Root
 sqrt(9)
+
+#Use brackets as in regular math
+(x+1)/y
 ```
 # Functions 
 ## Built-in Functions
@@ -296,61 +303,24 @@ functionName<-function(x,y,z){ #The actual commands are opened with a curly brac
 
 #### Assignment 6
 
-Write a function that takes one argument and then prints it out. Hint: we printed a result early in the class. Save the function as `myfunction`. Try to get it to work. 
+>1. Write a function that takes one argument, squares itself, divides by 3 and then prints the result. 
 
-[Solution](#assignment6)
 
-# Solutions
-
-#### Assignment 1 Solution {#assignment1}
-```{r assignment-1-solution, echo=TRUE}
-matrix(c(age, gender, lucky), nrow=3, ncol=3)
-
-```
-#### Assignment 2 Solution {assignment2}
-
-```{r assignment-2-solution, eval=F}
-#The number in the square brackets indicates which element of the vector gender to return 
-age[1]
-gender[1]
-```
-#### Assignment 3 Solution {assignment3}
-
-```{r assignment-3-solution, eval=F}
-matrix1[1,]
-matrix1[2,]
-matrix1[,1]
-```
-#### Assignment 4 Solution {assignment4}
-```{r assignment-4-solution, eval=F}
-#First through third
-matrix1[1:3,]
-#first and third
-matrix1[c(1,3),]
-
-```
-#### Assignment 5 Solution {assignment5}
-```{r assignment-5-solution, eval=F}
-df<-data.frame(age=age, gender=gender, lucky=lucky)
-```
-
-#### Assignment 6 Solution {assignment6}
-```{r assignment-6-solution, eval=F}
+```{r assignment-6-solution}
 #Defie the function
 myfunction<-function(i) {
+  #square i
+  i<-(i^2)/3
   print(i)  
 }
 #Print the number 7
 myfunction(7)
 
-#Print 7 but as a character.
-test(as.character(7))
 ```
 
 
-```{r, results='hide', echo=F}
-library(knitr)
-purl('1_LSIRM_2018.rmd', 'out.r')
-```
+
+
+
 
 
