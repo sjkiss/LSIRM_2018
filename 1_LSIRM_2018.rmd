@@ -1,7 +1,7 @@
 ---
 title: "LSIRM 2017: Introduction to R"
 author: "Simon Kiss"
-date: '2017-07-13'
+date: '2018-07-13'
 output: 
   html_document: 
     toc: true
